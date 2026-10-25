@@ -1,0 +1,1803 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>Byte's SQL Quest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: sticker-book map on graph paper. Chunky ink outlines, hard offset shadows, one bright sticker per job. */
+:root{
+  --paper:#EEF5FF; --grid:#D9E6FA; --card:#FFFFFF; --card-2:#F6F9FF;
+  --ink:#1C2448; --ink-soft:#56608C; --line:#1C2448; --shadow:#1C2448;
+  --pink:#FF5C8A; --sun:#FFC83A; --mint:#20C996; --sky:#3FA9F5; --grape:#8B6CFF; --orange:#FF8A3D;
+  --good:#16B47F; --bad:#F2584A; --good-bg:#DDF8EE; --bad-bg:#FFE3DF;
+  --on-accent:#1C2448; --locked:#C9D3E6;
+  --code-bg:#1C2448; --code-fg:#EEF3FF; --code-kw:#FF7BA3; --code-str:#FFD25E; --code-num:#5FE3B5; --code-id:#8CCBFF; --code-com:#8590B8;
+  --display:"Fredoka","Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --r:18px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#141936; --grid:#1D2448; --card:#20284F; --card-2:#262F5A;
+  --ink:#EEF2FF; --ink-soft:#A9B2D9; --line:#5B67A6; --shadow:#080B1E;
+  --good-bg:#11402F; --bad-bg:#4A1F22; --locked:#3A4370;
+  --code-bg:#0C1029; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#141936; --grid:#1D2448; --card:#20284F; --card-2:#262F5A;
+  --ink:#EEF2FF; --ink-soft:#A9B2D9; --line:#5B67A6; --shadow:#080B1E;
+  --good-bg:#11402F; --bad-bg:#4A1F22; --locked:#3A4370;
+  --code-bg:#0C1029; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1.5px,transparent 1.5px),linear-gradient(90deg,var(--grid) 1.5px,transparent 1.5px);
+  background-size:28px 28px;
+  color:var(--ink); font-family:var(--body); font-size:17px; line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 96px;
+}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+h1,h2,h3,h4{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+button{font:inherit;color:inherit}
+code{font-family:var(--mono);font-size:.88em;background:var(--card-2);border:1.5px solid var(--line);border-radius:7px;padding:1px 6px;white-space:nowrap}
+:focus-visible{outline:3px solid var(--sky);outline-offset:3px}
+.wrap{max-width:1080px;margin:0 auto}
+
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;padding-block:12px 10px;background:var(--paper)}
+.topbar-in{display:flex;align-items:center;gap:12px;flex-wrap:wrap;max-width:1080px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:10px;cursor:pointer;border:0;background:none;padding:0}
+.brand-mini{width:46px;height:56px;flex:none}
+.brand-name{font-family:var(--display);font-weight:700;font-size:1.35rem;line-height:1;text-align:left}
+.brand-name small{display:block;font-family:var(--body);font-size:.72rem;font-weight:800;color:var(--ink-soft);letter-spacing:.06em;text-transform:uppercase;margin-top:3px}
+.stats{display:flex;gap:8px;margin-left:auto;align-items:center;flex-wrap:wrap}
+.pill{display:flex;align-items:center;gap:6px;background:var(--card);border:2.5px solid var(--line);border-radius:999px;padding:4px 12px 4px 6px;font-weight:900;font-variant-numeric:tabular-nums;box-shadow:3px 3px 0 var(--shadow);white-space:nowrap}
+.pill svg{flex:none}
+.pill.bump{animation:bump .5s}
+.lvl-bar{width:58px;height:8px;border-radius:9px;background:var(--grid);overflow:hidden;border:1.5px solid var(--line)}
+.lvl-bar i{display:block;height:100%;background:var(--grape);border-radius:9px;transition:width .6s}
+.btn-break{background:var(--mint);color:var(--on-accent)}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.25) rotate(-4deg)}100%{transform:scale(1)}}
+
+/* ---------- nav ---------- */
+.tabs{display:flex;gap:8px;max-width:1080px;margin:4px auto 18px;flex-wrap:wrap}
+.tab{display:flex;align-items:center;gap:7px;padding:8px 14px;border:2.5px solid var(--line);border-radius:14px;background:var(--card);font-family:var(--display);font-weight:600;font-size:1rem;cursor:pointer;box-shadow:3px 3px 0 var(--shadow);transition:transform .12s}
+.tab:hover{transform:translate(-1px,-2px)}
+.tab[aria-current="page"]{background:var(--sun);color:var(--on-accent)}
+.tab svg{width:20px;height:20px}
+@media (max-width:720px){
+  .tabs{position:fixed;bottom:0;left:0;right:0;margin:0;z-index:30;background:var(--card);border-top:2.5px solid var(--line);
+    padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));gap:2px;flex-wrap:nowrap;justify-content:space-around}
+  .tab{flex-direction:column;gap:1px;font-size:.68rem;padding:5px 4px;border:0;box-shadow:none;background:none;border-radius:10px;flex:1;min-width:0}
+  .tab[aria-current="page"]{background:var(--sun)}
+  .brand-name small{display:none}
+  .pill .lvl-bar{display:none}
+}
+
+/* ---------- generic ---------- */
+.card{background:var(--card);border:2.5px solid var(--line);border-radius:var(--r);box-shadow:5px 5px 0 var(--shadow)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2.5px solid var(--line);border-radius:14px;padding:11px 20px;font-family:var(--display);font-weight:600;font-size:1.08rem;cursor:pointer;background:var(--card);box-shadow:4px 4px 0 var(--shadow);transition:transform .1s, box-shadow .1s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--shadow)}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--shadow)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none}
+.btn.go{background:var(--mint);color:var(--on-accent)}
+.btn.hot{background:var(--pink);color:var(--on-accent)}
+.btn.sun{background:var(--sun);color:var(--on-accent)}
+.btn.sky{background:var(--sky);color:var(--on-accent)}
+.btn.big{font-size:1.25rem;padding:14px 28px}
+.btn.small{font-size:.92rem;padding:7px 12px;border-radius:11px;box-shadow:3px 3px 0 var(--shadow)}
+.muted{color:var(--ink-soft)}
+.eyebrow{font-weight:900;font-size:.76rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.view-in{animation:viewIn .35s ease-out}
+@keyframes viewIn{from{opacity:.4;transform:translateY(10px)}to{opacity:1;transform:none}}
+.h-page{font-size:clamp(1.8rem,4vw,2.5rem);font-weight:700}
+.lead{max-width:62ch;margin:.4rem 0 1.2rem;color:var(--ink-soft);font-weight:700}
+
+/* ---------- byte mascot ---------- */
+.byte{overflow:visible;display:block}
+.byte .body{transform-origin:60px 146px;animation:bob 2.6s ease-in-out infinite}
+.byte .eyes{transform-origin:60px 70px;animation:blink 4.2s infinite}
+.byte .arm-r{transform-origin:98px 84px}
+.byte .arm-l{transform-origin:22px 84px}
+.byte.mood-happy .body{animation:jump .55s ease-in-out infinite}
+.byte.mood-happy .arm-r{animation:wave .35s ease-in-out infinite alternate}
+.byte.mood-happy .arm-l{animation:wave2 .35s ease-in-out infinite alternate}
+.byte.mood-sad .body{animation:wobble .6s ease-in-out 2}
+.byte.mood-think .pupil{transform:translate(2px,-3px)}
+.byte.mood-dance .body{animation:dance 1s ease-in-out infinite}
+.byte.mood-dance .arm-r{animation:wave .25s ease-in-out infinite alternate}
+.byte.mood-dance .arm-l{animation:wave2 .25s ease-in-out infinite alternate}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+@keyframes jump{0%,100%{transform:translateY(0) scale(1,1)}20%{transform:translateY(0) scale(1.08,.9)}55%{transform:translateY(-22px) scale(.95,1.06)}}
+@keyframes wobble{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+@keyframes wave{from{transform:rotate(0)}to{transform:rotate(-40deg)}}
+@keyframes wave2{from{transform:rotate(0)}to{transform:rotate(40deg)}}
+@keyframes dance{0%,100%{transform:rotate(-10deg) translateY(0)}25%{transform:translateY(-14px)}50%{transform:rotate(10deg) translateY(0)}75%{transform:translateY(-14px)}}
+
+/* ---------- map ---------- */
+.home-hero{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;padding:18px 22px;margin-bottom:26px}
+.home-hero h1{font-size:clamp(1.6rem,3.6vw,2.3rem)}
+.home-hero p{margin:.3rem 0 .8rem;font-weight:700;color:var(--ink-soft);max-width:56ch}
+@media (max-width:560px){.home-hero{grid-template-columns:1fr;text-align:center}.home-hero .byte{margin:0 auto}.home-hero .row{justify-content:center}}
+.map{position:relative;padding-bottom:30px}
+.map-path{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.world{position:relative;margin:0 0 10px}
+.world-banner{display:flex;gap:14px;align-items:center;padding:14px 18px;max-width:560px;margin:0 auto 22px;position:relative;z-index:2}
+.world-badge{flex:none;width:54px;height:54px;border-radius:16px;border:2.5px solid var(--line);display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:1.5rem;color:var(--on-accent)}
+.world-banner h2{font-size:1.4rem}
+.world-banner .eyebrow{margin-bottom:2px}
+.world-prog{margin-left:auto;font-weight:900;font-variant-numeric:tabular-nums;color:var(--ink-soft);white-space:nowrap}
+.nodes{display:flex;flex-direction:column;gap:26px;margin-bottom:34px}
+.node-row{position:relative;height:96px}
+.node{position:absolute;top:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;cursor:pointer;padding:0;z-index:2;width:150px}
+.node-dot{width:78px;height:78px;border-radius:50%;border:3px solid var(--line);display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:1.6rem;box-shadow:0 6px 0 var(--shadow);transition:transform .15s;color:var(--on-accent);position:relative}
+.node:hover .node-dot{transform:translateY(-4px) scale(1.05)}
+.node.locked{cursor:not-allowed}
+.node.locked .node-dot{background:var(--locked)!important;color:var(--ink-soft)}
+.node.current .node-dot::after{content:"";position:absolute;inset:-12px;border-radius:50%;border:4px solid var(--sun);animation:ring 1.4s ease-out infinite}
+.node.boss .node-dot{width:92px;height:92px;border-radius:28px}
+.node-label{font-family:var(--display);font-weight:600;font-size:.95rem;text-align:center;line-height:1.15;background:var(--card);border:2px solid var(--line);border-radius:10px;padding:2px 8px;max-width:150px}
+.stars{display:flex;gap:1px;position:absolute;top:-14px;left:50%;transform:translateX(-50%)}
+.node-byte{position:absolute;top:-30px;width:62px;z-index:3;pointer-events:none}
+@keyframes ring{0%{transform:scale(.85);opacity:1}100%{transform:scale(1.3);opacity:0}}
+
+/* ---------- player ---------- */
+.player{max-width:900px;margin:0 auto}
+.player-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.icon-btn{width:44px;height:44px;flex:none;border-radius:12px;border:2.5px solid var(--line);background:var(--card);cursor:pointer;display:grid;place-items:center;box-shadow:3px 3px 0 var(--shadow);font-weight:900;font-size:1.1rem}
+.pbar{flex:1;display:flex;gap:4px;min-width:0}
+.pbar i{flex:1;height:14px;border-radius:9px;background:var(--grid);border:2px solid var(--line);transition:background .3s}
+.pbar i.on{background:var(--mint)}
+.pbar i.now{background:var(--sun);animation:pulse 1.2s infinite}
+@keyframes pulse{50%{transform:scaleY(1.25)}}
+.hearts{display:flex;gap:2px}
+.hearts .heart.lost{filter:grayscale(1);opacity:.35;animation:heartbreak .6s}
+@keyframes heartbreak{30%{transform:scale(1.5) rotate(-15deg)}}
+.stage{animation:slideIn .4s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes slideIn{from{opacity:0;transform:translateX(40px) rotate(1deg)}to{opacity:1;transform:none}}
+.talk{display:grid;grid-template-columns:150px 1fr;gap:18px;align-items:end}
+@media (max-width:620px){.talk{grid-template-columns:90px 1fr}.talk .byte{width:90px!important;height:auto}}
+.bubble{position:relative;padding:20px 22px;font-size:1.18rem;font-weight:700;min-width:0}
+.bubble::before{content:"";position:absolute;left:-16px;bottom:30px;border:14px solid transparent;border-right-color:var(--line);border-left:0}
+.bubble::after{content:"";position:absolute;left:-11px;bottom:32px;border:12px solid transparent;border-right-color:var(--card);border-left:0}
+.bubble p{margin:0 0 .5em}.bubble p:last-child{margin:0}
+.step-actions{display:flex;justify-content:flex-end;gap:12px;margin-top:20px;flex-wrap:wrap}
+.q-title{font-family:var(--display);font-weight:600;font-size:1.45rem;margin:0 0 14px;line-height:1.25}
+.q-card{padding:22px}
+.opts{display:grid;gap:12px}
+.opt{text-align:left;padding:14px 18px;border:2.5px solid var(--line);border-radius:14px;background:var(--card);cursor:pointer;font-weight:800;font-size:1.08rem;box-shadow:3px 3px 0 var(--shadow);display:flex;gap:12px;align-items:center;transition:transform .1s}
+.opt:hover{transform:translateX(4px)}
+.opt .k{flex:none;width:32px;height:32px;border-radius:10px;border:2px solid var(--line);display:grid;place-items:center;font-family:var(--display);background:var(--card-2)}
+.opt.right{background:var(--good-bg);border-color:var(--good);animation:pop .4s}
+.opt.right .k{background:var(--good);color:#fff}
+.opt.wrong{background:var(--bad-bg);border-color:var(--bad);animation:shake .4s}
+@keyframes pop{50%{transform:scale(1.04)}}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.why{margin-top:14px;padding:12px 16px;border-radius:14px;border:2px dashed var(--line);font-weight:700;animation:viewIn .3s}
+.sqlblock{font-family:var(--mono);background:var(--code-bg);color:var(--code-fg);border-radius:14px;padding:14px 16px;margin:6px 0 16px;overflow-x:auto;white-space:pre-wrap;font-size:1rem;border:2.5px solid var(--line)}
+.t-kw{color:var(--code-kw);font-weight:700}.t-str{color:var(--code-str)}.t-num{color:var(--code-num)}.t-id{color:var(--code-id)}.t-com{color:var(--code-com);font-style:italic}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;border:2.5px solid var(--line);border-radius:14px;background:var(--card);max-width:100%}
+table.data{border-collapse:collapse;font-size:.92rem;width:100%;font-variant-numeric:tabular-nums}
+table.data th{font-family:var(--mono);font-size:.8rem;text-align:left;padding:7px 12px;background:var(--sun);color:var(--on-accent);border-bottom:2.5px solid var(--line);white-space:nowrap}
+table.data td{padding:6px 12px;border-top:1.5px solid var(--grid);white-space:nowrap;font-weight:700}
+table.data tr:nth-child(even) td{background:var(--card-2)}
+table.data td.null{color:var(--ink-soft);font-style:italic;font-weight:500}
+table.data tbody tr{animation:rowIn .35s backwards}
+@keyframes rowIn{from{opacity:0;transform:translateX(-12px)}}
+.tbl-cap{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:0 0 6px;font-weight:900}
+.tbl-cap .muted{font-size:.85rem}
+.more{font-size:.85rem;color:var(--ink-soft);padding:6px 12px;font-weight:700}
+
+/* code task */
+.task-q{font-family:var(--display);font-weight:600;font-size:1.35rem;margin:0 0 14px;line-height:1.3}
+.task-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:820px){.task-grid{grid-template-columns:minmax(0,1fr)}}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.editor{position:relative;font:500 16px/1.55 var(--mono);background:var(--code-bg);border:2.5px solid var(--line);border-radius:14px;box-shadow:4px 4px 0 var(--shadow)}
+.editor pre,.editor textarea{margin:0;padding:14px 16px;white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;border:0;font:inherit;letter-spacing:0;tab-size:2}
+.editor pre{min-height:132px;color:var(--code-fg);pointer-events:none}
+.editor textarea{position:absolute;inset:0;width:100%;height:100%;resize:none;background:transparent;color:transparent;caret-color:var(--sun);outline:none;overflow:hidden;border-radius:14px}
+.editor:focus-within{outline:3px solid var(--sky);outline-offset:2px}
+.editor .ph{position:absolute;left:16px;top:14px;color:var(--code-com);pointer-events:none;font-style:italic}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-weight:700;font-size:.86rem;padding:5px 10px;border-radius:9px;border:2px solid var(--line);background:var(--card);cursor:pointer;box-shadow:2px 2px 0 var(--shadow);transition:transform .1s}
+.chip:hover{transform:translateY(-2px)}
+.chip.kw{background:var(--pink);color:var(--on-accent)}
+.chip.tb{background:var(--sun);color:var(--on-accent)}
+.chip.cl{background:var(--sky);color:var(--on-accent)}
+.chip.used{opacity:.25;pointer-events:none}
+.msg{padding:14px 16px;border-radius:14px;border:2.5px solid var(--line);font-weight:800;animation:viewIn .3s}
+.msg.good{background:var(--good-bg);border-color:var(--good)}
+.msg.bad{background:var(--bad-bg);border-color:var(--bad)}
+.msg.info{background:var(--card-2)}
+.msg .big{font-family:var(--display);font-size:1.3rem;display:block;margin-bottom:2px}
+.hintbox{padding:12px 16px;border-radius:14px;border:2.5px dashed var(--sun);background:var(--card);font-weight:700}
+.hintbox b{color:var(--orange)}
+.ai-ans{white-space:pre-wrap}
+
+/* build */
+.build-slot{min-height:64px;padding:12px;border:2.5px dashed var(--line);border-radius:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--code-bg)}
+.build-slot .chip{animation:pop .25s}
+.build-slot:empty::before{content:"Tap the blocks below to build your spell";color:var(--code-com);font-style:italic;font-family:var(--mono);font-size:.9rem}
+.build-bank{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.build-bank .chip,.build-slot .chip{font-size:1.02rem;padding:8px 14px}
+
+/* boss */
+.boss-arena{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;padding:12px 18px;margin-bottom:18px}
+.boss-arena .boss{width:110px;height:110px}
+.hpbar{height:22px;border-radius:12px;border:2.5px solid var(--line);background:var(--grid);overflow:hidden;margin-top:6px}
+.hpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--bad),var(--orange));transition:width .5s cubic-bezier(.3,1.6,.5,1)}
+.boss.hit{animation:hit .5s}
+.boss.laugh{animation:laugh .5s 2}
+.boss-svg .bb{transform-origin:60px 70px;animation:bossbob 1.8s ease-in-out infinite}
+@keyframes bossbob{50%{transform:translateY(-6px) rotate(3deg)}}
+@keyframes hit{0%{filter:none}20%{transform:translateX(14px) rotate(10deg);filter:brightness(2.2)}60%{transform:translateX(-8px)}100%{transform:none}}
+@keyframes laugh{50%{transform:scale(1.12) rotate(-5deg)}}
+
+/* finish */
+.finish{text-align:center;padding:30px 20px;max-width:620px;margin:0 auto}
+.finish .byte{margin:0 auto}
+.big-stars{display:flex;justify-content:center;gap:10px;margin:12px 0}
+.big-stars svg{animation:starIn .6s cubic-bezier(.2,1.6,.4,1) backwards}
+.big-stars svg:nth-child(2){animation-delay:.25s}.big-stars svg:nth-child(3){animation-delay:.5s}
+@keyframes starIn{from{transform:scale(0) rotate(-180deg)}}
+.reward-row{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin:10px 0 18px}
+.journal{margin:18px 0;text-align:left}
+.journal textarea,.field{width:100%;border:2.5px solid var(--line);border-radius:14px;padding:12px 14px;font:inherit;font-weight:700;background:var(--card-2);color:var(--ink);resize:vertical}
+
+/* arena / projects / cards grid */
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
+.pcard{padding:18px;display:flex;flex-direction:column;gap:8px;cursor:pointer;text-align:left;transition:transform .12s}
+.pcard:hover{transform:translate(-2px,-3px)}
+.pcard.locked{cursor:not-allowed;opacity:.65}
+.pcard h3{font-size:1.2rem}
+.tag{display:inline-block;font-weight:900;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;padding:3px 9px;border-radius:999px;border:2px solid var(--line);color:var(--on-accent)}
+.tag.easy{background:var(--mint)}.tag.medium{background:var(--sun)}.tag.hard{background:var(--pink)}
+.solved{color:var(--good);font-weight:900}
+.section-h{font-size:1.5rem;margin:26px 0 12px}
+.verdict{font-family:var(--display);font-size:1.6rem}
+.proj-art{height:110px;border-radius:14px;border:2.5px solid var(--line);display:grid;place-items:center;overflow:hidden;position:relative}
+
+/* tracker */
+.tiles{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:22px}
+.tile{padding:16px 18px}
+.tile .num{font-family:var(--display);font-weight:700;font-size:2.2rem;line-height:1;font-variant-numeric:tabular-nums}
+.tile .lbl{font-weight:800;color:var(--ink-soft);font-size:.9rem}
+.two{display:grid;gap:18px;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+@media (max-width:760px){.two{grid-template-columns:minmax(0,1fr)}}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal .dow{font-size:.72rem;font-weight:900;color:var(--ink-soft);text-align:center}
+.cal .d{aspect-ratio:1;border-radius:9px;border:2px solid var(--line);display:grid;place-items:center;font-size:.78rem;font-weight:900;position:relative;background:var(--card-2);max-width:100%}
+.cal .d.l1{background:color-mix(in srgb,var(--mint) 35%,var(--card))}
+.cal .d.l2{background:color-mix(in srgb,var(--mint) 65%,var(--card))}
+.cal .d.l3{background:var(--mint);color:var(--on-accent)}
+.cal .d.today{outline:3px solid var(--pink);outline-offset:2px}
+.cal .d.empty{visibility:hidden}
+.cal .d .st{position:absolute;top:-8px;right:-6px}
+.bars{display:flex;gap:10px;align-items:flex-end;height:170px;position:relative;padding-top:10px}
+.bars .b{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;min-width:0}
+.bars .b i{display:block;width:100%;max-width:44px;border-radius:9px 9px 4px 4px;border:2px solid var(--line);background:var(--grape);animation:grow .8s cubic-bezier(.2,1.3,.4,1) backwards}
+.bars .b span{font-size:.75rem;font-weight:900;color:var(--ink-soft)}
+.bars .b em{font-style:normal;font-size:.75rem;font-weight:900;font-variant-numeric:tabular-nums}
+.goal-line{position:absolute;left:0;right:0;border-top:2.5px dashed var(--pink);pointer-events:none}
+.goal-line span{position:absolute;right:0;top:-20px;font-size:.72rem;font-weight:900;color:var(--pink)}
+@keyframes grow{from{transform:scaleY(0);transform-origin:bottom}}
+.jlist{display:flex;flex-direction:column;gap:10px}
+.jitem{padding:12px 14px;border-radius:14px;border:2px solid var(--line);background:var(--card-2);font-weight:700}
+.jitem small{display:block;color:var(--ink-soft);font-weight:800}
+
+/* closet */
+.closet{display:grid;grid-template-columns:260px minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:760px){.closet{grid-template-columns:minmax(0,1fr)}}
+.stagecard{padding:20px;text-align:center;position:sticky;top:90px}
+.stagecard .byte{margin:0 auto}
+.shop{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+.item{padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;text-align:center;font-weight:800}
+.item.wearing{background:var(--good-bg)}
+.item svg{width:74px;height:74px}
+.swatch{width:40px;height:40px;border-radius:50%;border:2.5px solid var(--line)}
+.badges{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.badge{padding:12px;text-align:center;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:4px}
+.badge.off{opacity:.5}
+.badge.off .medal{filter:grayscale(1)}
+.badge small{color:var(--ink-soft);font-weight:700;font-size:.8rem;line-height:1.3}
+.medal{width:64px;height:64px}
+
+/* modal, toast, floaters */
+#modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:color-mix(in srgb,var(--ink) 45%,transparent);animation:fade .2s}
+#modal[hidden]{display:none}
+.modal-box{width:min(560px,100%);max-height:88vh;overflow:auto;padding:26px;animation:popIn .45s cubic-bezier(.2,1.5,.4,1)}
+.modal-box.wide{width:min(900px,100%)}
+@keyframes popIn{from{transform:scale(.7) translateY(30px);opacity:0}}
+@keyframes fade{from{opacity:0}}
+#toasts{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:70;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(92vw,460px)}
+.toast{background:var(--card);border:2.5px solid var(--line);border-radius:16px;padding:10px 16px;font-weight:900;box-shadow:4px 4px 0 var(--shadow);display:flex;gap:10px;align-items:center;animation:toastIn .5s cubic-bezier(.2,1.5,.4,1)}
+@keyframes toastIn{from{transform:translateY(-40px) scale(.8);opacity:0}}
+.floater{position:fixed;z-index:80;pointer-events:none;font-family:var(--display);font-weight:700;font-size:1.5rem;color:var(--grape);-webkit-text-stroke:1px var(--card);animation:floatUp 1.2s ease-out forwards}
+@keyframes floatUp{to{transform:translateY(-80px) scale(1.3);opacity:0}}
+.coinfly{position:fixed;z-index:80;pointer-events:none;transition:transform .8s cubic-bezier(.5,-0.4,.6,1),opacity .8s}
+#fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:75}
+.joke{font-family:var(--display);font-size:1.35rem;font-weight:600;margin:12px 0}
+.timer-ring{width:110px;height:110px;margin:10px auto}
+.sync{font-size:.78rem;font-weight:800;color:var(--ink-soft)}
+.cert{text-align:center;padding:34px 26px;border:6px double var(--line);border-radius:18px;background:var(--card-2)}
+.cert h2{font-size:2rem}
+.cert .nm{font-family:var(--display);font-size:2.4rem;color:var(--pink);margin:10px 0}
+
+/* lesson art */
+.art{margin:14px 0 4px;padding:14px;border-radius:14px;border:2px dashed var(--line);background:var(--card-2);overflow:hidden}
+.art-anat td.g{animation:rowglow 3s infinite}
+@keyframes rowglow{0%,30%{background:var(--sun);color:var(--on-accent)}40%,100%{background:transparent}}
+.art-anat .colg{animation:colglow 3s infinite}
+@keyframes colglow{0%,45%{background:transparent}55%,90%{background:var(--sky);color:var(--on-accent)}100%{background:transparent}}
+.funnel{position:relative;height:190px}
+.funnel .fn{position:absolute;left:50%;top:70px;transform:translateX(-50%);width:0;height:0;border-left:70px solid transparent;border-right:70px solid transparent;border-top:60px solid var(--grape);opacity:.85}
+.funnel .fnl{position:absolute;left:50%;top:48px;transform:translateX(-50%);font-family:var(--mono);font-weight:700;font-size:.8rem;background:var(--card);border:2px solid var(--line);padding:2px 8px;border-radius:8px;z-index:2;white-space:nowrap}
+.funnel .pc{position:absolute;left:50%;top:0;margin-left:-34px;width:68px;text-align:center;font-weight:900;font-size:.8rem;padding:4px 0;border-radius:9px;border:2px solid var(--line);background:var(--card);opacity:0}
+.funnel .pc.pass{animation:pass 5s infinite}
+.funnel .pc.rej{animation:rej 5s infinite}
+@keyframes pass{0%{opacity:0;transform:translateY(0)}8%{opacity:1}35%{transform:translateY(80px)}60%,85%{opacity:1;transform:translateY(150px);background:var(--mint)}100%{opacity:0;transform:translateY(150px)}}
+@keyframes rej{0%{opacity:0;transform:translate(0,0)}8%{opacity:1}35%{transform:translate(0,40px)}60%{opacity:1;transform:translate(var(--dx),10px) rotate(-30deg);background:var(--bad-bg)}80%,100%{opacity:0;transform:translate(var(--dx),60px) rotate(-60deg)}}
+.sortbars{display:flex;gap:10px;align-items:flex-end;height:140px;justify-content:center;position:relative}
+.sortbars div{width:46px;border-radius:8px 8px 3px 3px;border:2px solid var(--line);display:flex;align-items:flex-end;justify-content:center;font-size:.72rem;font-weight:900;padding-bottom:4px;color:var(--on-accent);animation:sortmove 4s ease-in-out infinite alternate}
+@keyframes sortmove{0%,30%{transform:translateX(0)}70%,100%{transform:translateX(var(--to))}}
+.buckets{display:flex;justify-content:space-around;align-items:flex-end;height:160px;position:relative}
+.bucket{width:80px;height:62px;border:3px solid var(--line);border-top:0;border-radius:0 0 18px 18px;position:relative;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-weight:900;font-family:var(--display)}
+.bucket span{position:absolute;top:-28px;font-size:.8rem;font-family:var(--body)}
+.candy{position:absolute;width:20px;height:20px;border-radius:50%;border:2px solid var(--line);top:0;animation:drop 3.6s infinite backwards}
+@keyframes drop{0%{transform:translate(0,0);opacity:0}10%{opacity:1}55%,100%{transform:translate(var(--dx),118px);opacity:1}}
+.joinart{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.joinart .mt{border:2px solid var(--line);border-radius:10px;overflow:hidden;font-size:.82rem;font-weight:800;background:var(--card)}
+.joinart .mt div{padding:3px 10px}.joinart .mt div:first-child{background:var(--sun);color:var(--on-accent);font-family:var(--mono)}
+.joinart .l{animation:slideR 3s ease-in-out infinite alternate}.joinart .r{animation:slideL 3s ease-in-out infinite alternate}
+.joinart .hand{font-family:var(--mono);font-size:.8rem;font-weight:700;padding:4px 8px;border-radius:8px;background:var(--pink);color:var(--on-accent);border:2px solid var(--line);animation:pop 1.5s infinite}
+@keyframes slideR{from{transform:translateX(-24px)}to{transform:translateX(0)}}
+@keyframes slideL{from{transform:translateX(24px)}to{transform:translateX(0)}}
+.det{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.det div{border:2.5px solid var(--line);border-radius:14px;padding:10px;background:var(--card);font-weight:800;animation:popIn .5s cubic-bezier(.2,1.5,.4,1) backwards}
+.det div b{display:block;font-family:var(--mono);color:var(--pink);font-size:.95rem}
+.det div:nth-child(2){animation-delay:.4s}.det div:nth-child(3){animation-delay:.8s}.det div:nth-child(4){animation-delay:1.2s}
+.boxq{width:90px;height:80px;margin:6px auto;border:3px solid var(--line);border-radius:10px;background:var(--sun);display:grid;place-items:center;font-family:var(--display);font-size:2.6rem;color:var(--on-accent);animation:wobble 1.2s ease-in-out infinite}
+.sprouts{display:flex;justify-content:center;gap:22px;align-items:flex-end;height:120px}
+.sprouts div{display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:900;font-size:.8rem}
+.sprouts svg{transform-origin:bottom;animation:sprout 4s infinite backwards}
+@keyframes sprout{0%{transform:scale(.1)}30%,100%{transform:scale(1)}}
+.steps-art{display:flex;align-items:flex-end;gap:6px;justify-content:center;height:110px}
+.steps-art i{width:44px;border:2px solid var(--line);border-radius:6px 6px 0 0;background:var(--sky);animation:lightup 4s infinite backwards}
+@keyframes lightup{0%,10%{background:var(--grid)}25%,100%{background:var(--sun)}}
+.flames{display:flex;gap:6px;justify-content:center}
+.flames div{width:40px;height:48px;border:2px solid var(--line);border-radius:10px;display:grid;place-items:center;font-size:.7rem;font-weight:900;background:var(--card);position:relative}
+.flames div svg{animation:flameIn 5s infinite backwards}
+@keyframes flameIn{0%,5%{opacity:0;transform:scale(0)}15%,100%{opacity:1;transform:scale(1)}}
+.flame-anim{animation:flicker 1.4s ease-in-out infinite;transform-origin:50% 90%}
+@keyframes flicker{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.08,1.14) rotate(3deg)}}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+
+<header class="topbar"><div class="topbar-in">
+  <button class="brand" id="brand" aria-label="Go to the map">
+    <span class="brand-mini" id="brandByte"></span>
+    <span class="brand-name">Byte's SQL Quest<small id="hello">Ready, explorer?</small></span>
+  </button>
+  <div class="stats" id="stats"></div>
+</div></header>
+<nav class="tabs" id="tabs" aria-label="Main"></nav>
+<main class="wrap" id="view" aria-live="polite"></main>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div id="toasts" aria-live="polite"></div>
+<div id="modal" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-asm.js"></script>
+<script>
+"use strict";
+/* =====================================================================
+   DATASETS — every run gets a fresh in-memory SQLite database
+   ===================================================================== */
+const PETS_SQL = `
+CREATE TABLE owners (id INTEGER PRIMARY KEY, name TEXT, city TEXT, age INTEGER);
+INSERT INTO owners VALUES (1,'Riya','Ranchi',34),(2,'Kabir','Delhi',29),(3,'Meera','Mumbai',41),(4,'Arjun','Ranchi',52),(5,'Zoya','Pune',23),(6,'Dev','Delhi',37),(7,'Ishaan','Kolkata',31);
+CREATE TABLE pets (id INTEGER PRIMARY KEY, name TEXT, animal TEXT, age INTEGER, color TEXT, weight_kg REAL, owner_id INTEGER);
+INSERT INTO pets VALUES
+(1,'Momo','dog',3,'brown',12,1),(2,'Biscuit','cat',5,'orange',4,2),(3,'Sheru','dog',7,'black',25,3),
+(4,'Pakoda','hamster',1,'golden',0.2,1),(5,'Chintu','parrot',2,'green',0.4,4),(6,'Tiger','cat',4,'white',5,5),
+(7,'Bubbles','fish',1,'orange',0.1,2),(8,'Laddoo','dog',2,'white',8,6),(9,'Mithu','parrot',6,'green',0.5,3),
+(10,'Coco','rabbit',3,'white',2,NULL),(11,'Rocky','turtle',15,'green',3,4),(12,'Jelly','cat',1,'black',3.5,6);
+CREATE TABLE snacks (id INTEGER PRIMARY KEY, pet_id INTEGER, snack TEXT, qty INTEGER, price INTEGER);
+INSERT INTO snacks VALUES (1,1,'bone',3,20),(2,1,'biscuit',5,5),(3,2,'fish',2,30),(4,3,'bone',4,20),(5,5,'chilli',10,2),(6,6,'milk',1,15),
+(7,8,'bone',2,20),(8,8,'biscuit',6,5),(9,9,'chilli',4,2),(10,11,'lettuce',3,10),(11,12,'fish',1,30),(12,2,'milk',2,15);`;
+
+const DATASETS = {
+  pets: PETS_SQL,
+  arena: PETS_SQL + `
+CREATE TABLE employees (id INTEGER PRIMARY KEY, name TEXT, dept TEXT, salary INTEGER, manager_id INTEGER);
+INSERT INTO employees VALUES (1,'Asha','Boss',200000,NULL),(2,'Vikram','Tech',120000,1),(3,'Neha','Tech',130000,2),(4,'Rahul','Tech',90000,2),
+(5,'Pooja','Sales',80000,1),(6,'Sam','Sales',85000,5),(7,'Lina','Sales',70000,5),(8,'Omar','Tech',90000,2);
+CREATE TABLE scores (id INTEGER PRIMARY KEY, student TEXT, subject TEXT, marks INTEGER);
+INSERT INTO scores VALUES (1,'Riya','Math',92),(2,'Riya','Science',85),(3,'Kabir','Math',78),(4,'Kabir','Science',95),(5,'Meera','Math',88),
+(6,'Meera','Science',88),(7,'Arjun','Math',65),(8,'Arjun','Science',72),(9,'Zoya','Math',99),(10,'Zoya','Science',81);`,
+  pizza: `
+CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT, area TEXT);
+INSERT INTO customers VALUES (1,'Aarav','Lalpur'),(2,'Sana','Harmu'),(3,'Neel','Lalpur'),(4,'Diya','Kanke'),(5,'Yash','Harmu'),(6,'Anu','Kanke');
+CREATE TABLE menu (id INTEGER PRIMARY KEY, item TEXT, price INTEGER, veg INTEGER);
+INSERT INTO menu VALUES (1,'Margherita',150,1),(2,'Farmhouse',220,1),(3,'Chicken Tikka',260,0),(4,'Corn Cheese',180,1),(5,'Pepperoni',280,0),(6,'Garlic Bread',90,1);
+CREATE TABLE orders (id INTEGER PRIMARY KEY, customer_id INTEGER, item_id INTEGER, qty INTEGER, day TEXT);
+INSERT INTO orders VALUES (1,1,1,2,'Mon'),(2,2,3,1,'Mon'),(3,3,2,1,'Tue'),(4,1,5,1,'Tue'),(5,4,6,3,'Wed'),(6,5,1,1,'Wed'),
+(7,2,4,2,'Thu'),(8,3,3,2,'Fri'),(9,1,2,1,'Fri'),(10,5,6,2,'Sat'),(11,4,1,1,'Sat'),(12,2,5,2,'Sun');`,
+  library: `
+CREATE TABLE books (id INTEGER PRIMARY KEY, title TEXT, author TEXT, genre TEXT);
+INSERT INTO books VALUES (1,'The Jungle Book','Kipling','adventure'),(2,'Malgudi Days','R.K. Narayan','stories'),(3,'Harry Potter 1','Rowling','fantasy'),
+(4,'Panchatantra','Vishnu Sharma','stories'),(5,'The Hobbit','Tolkien','fantasy'),(6,'Wings of Fire','Kalam','biography'),(7,'Matilda','Dahl','fantasy'),(8,'Treasure Island','Stevenson','adventure');
+CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, class TEXT);
+INSERT INTO students VALUES (1,'Riya','5A'),(2,'Kabir','5B'),(3,'Meera','5A'),(4,'Arjun','6A'),(5,'Zoya','5B');
+CREATE TABLE loans (id INTEGER PRIMARY KEY, book_id INTEGER, student_id INTEGER, borrowed TEXT, returned TEXT);
+INSERT INTO loans VALUES (1,3,1,'2026-09-01','2026-09-10'),(2,5,2,'2026-09-03',NULL),(3,7,3,'2026-09-05','2026-09-12'),(4,3,4,'2026-09-12',NULL),
+(5,1,5,'2026-09-15','2026-09-20'),(6,6,1,'2026-09-18',NULL),(7,3,2,'2026-09-22','2026-09-30'),(8,2,3,'2026-09-25','2026-10-01');`,
+  mystery: `
+CREATE TABLE people (id INTEGER PRIMARY KEY, name TEXT, class TEXT, shoe_size INTEGER);
+INSERT INTO people VALUES (1,'Chikoo','5B',5),(2,'Pinky','5A',4),(3,'Bunty','5B',5),(4,'Golu','6A',6),(5,'Tinku','5B',5),(6,'Mini','5A',3),(7,'Raju','6A',5);
+CREATE TABLE clues (id INTEGER PRIMARY KEY, clue TEXT);
+INSERT INTO clues VALUES (1,'The cookie jar vanished from the KITCHEN between 14:50 and 15:10.'),(2,'Muddy footprints of SHOE SIZE 5 were found next to the empty jar.'),
+(3,'A trail of crumbs led to the door of class 5B.'),(4,'The thief has NO verified alibi. Check the alibis table!');
+CREATE TABLE sightings (id INTEGER PRIMARY KEY, person_id INTEGER, place TEXT, time TEXT);
+INSERT INTO sightings VALUES (1,2,'kitchen','14:55'),(2,1,'kitchen','15:02'),(3,3,'kitchen','14:58'),(4,4,'playground','15:00'),(5,5,'kitchen','15:05'),
+(6,6,'library','15:01'),(7,7,'kitchen','15:20'),(8,3,'library','15:30'),(9,1,'playground','14:30');
+CREATE TABLE alibis (person_id INTEGER, alibi TEXT, verified INTEGER);
+INSERT INTO alibis VALUES (3,'Was helping the art teacher paint',1),(5,'Was at football practice',1),(1,'Says he was napping in class',0),(2,'Was in the music room',1);`,
+  sports: `
+CREATE TABLE students (id INTEGER PRIMARY KEY, name TEXT, house TEXT);
+INSERT INTO students VALUES (1,'Riya','Red'),(2,'Kabir','Blue'),(3,'Meera','Green'),(4,'Arjun','Red'),(5,'Zoya','Blue'),(6,'Dev','Green'),(7,'Tara','Red'),(8,'Ishaan','Blue');
+CREATE TABLE events (id INTEGER PRIMARY KEY, event TEXT);
+INSERT INTO events VALUES (1,'100m race'),(2,'Sack race'),(3,'Long jump'),(4,'Lemon spoon');
+CREATE TABLE results (id INTEGER PRIMARY KEY, student_id INTEGER, event_id INTEGER, position INTEGER);
+INSERT INTO results VALUES (1,5,1,1),(2,1,1,2),(3,6,1,3),(4,4,2,1),(5,2,2,2),(6,3,2,3),(7,5,3,1),(8,7,3,2),(9,8,3,3),(10,3,4,1),(11,1,4,2),(12,2,4,3);`
+};
+const DS_NAMES = {pets:'Pet Town', arena:'Arena (pets + employees + scores)', pizza:'Pizza Palace', library:'School Library', mystery:'Cookie Mystery', sports:'Sports Day'};
+
+/* =====================================================================
+   COURSE CONTENT
+   ===================================================================== */
+const T = (say, o={}) => ({t:'talk', say, ...o});
+const Q = (q, opts, a, why, o={}) => ({t:'mcq', q, opts, a, why, ...o});
+const C = (q, sol, o={}) => ({t:'code', q, sol, ...o});
+const B = (q, answer, o={}) => ({t:'build', q, answer, ...o});
+
+const WORLDS = [
+ {id:'w0', name:'Brain Camp', sub:'How to learn and how to think', color:'grape', lessons:[
+  {id:'w0a', title:'Your Super Brain', steps:[
+   T("Hi! I'm **Byte**, a tiny database. I keep things neat and organized. Before we learn SQL, I'll tell you my secrets for learning ANYTHING."),
+   T("**Secret 1: Mistakes grow your brain.** Your brain is like a muscle. Every oops makes it stronger. In this game, wrong answers never take away your points.", {art:'grow'}),
+   Q("You got a question wrong. What does a learning superhero do?", ["Give up forever","Read the hint and try again","Throw the tablet out the window"], 1, "Yes! Try again is the superpower. Each try is a rep for your brain muscle."),
+   T("**Secret 2: Tiny bites.** A big pizza is too much in one bite. So we eat it slice by slice. Every lesson here is short. One card at a time.", {art:'tiny'}),
+   T("**Secret 3: Guess first, peek later.** Before you look at a hint, make a guess. Even a wrong guess wakes your brain up and helps it remember."),
+   T("**Secret 4: Teach Byte!** After a lesson, explain it to me like I'm your little cousin. If you can explain it, you really know it. You can write it in your journal."),
+   T("**Secret 5: A little every day.** Your brain saves what you learned while you sleep. 10 minutes every day beats 2 hours once a month. Your flame shows your streak!", {art:'flames'}),
+   T("**Secret 6: Brain breaks are allowed.** If your brain feels fizzy or bored, press **Brain break** at the top. Wiggle, laugh, drink water, then come back."),
+   Q("Which plan helps your brain more?", ["2 hours once a month","10 minutes every day"], 1, "Right! Little and often wins. That's why I give you a daily goal and a streak."),
+   Q("You don't understand something yet. Which word is the magic word?", ["Never","Yet","Boring"], 1, "\"I don't get it YET.\" That tiny word means you're still on your way."),
+  ]},
+  {id:'w0b', title:'Think Like a Data Detective', steps:[
+   T("SQL is how we ASK a database questions. Asking good questions is a superpower. Detectives ask **4 questions** before they start."),
+   T("Here are the 4 Detective Questions. You'll use them for every SQL puzzle, even the really hard ones.", {art:'detective'}),
+   T("Example: *\"Show me the names of all dogs, youngest first.\"*\n1. Where is it? **pets** table\n2. What to see? **name**\n3. Which ones? **only dogs**\n4. What order? **by age**"),
+   Q("Question: \"Which cats are older than 3?\" Which pets do we want?", ["All the pets","Only cats older than 3","Only dogs"], 1, "Yes. That's the 'which ones?' question. It becomes the WHERE part of SQL."),
+   Q("Question: \"List all the owners' cities.\" What do we want to SEE?", ["The city","The pet's color","Their weight"], 0, "Yes. 'What to see' becomes the SELECT part."),
+   T("**Detective trick: Imagine the answer first.** Before typing, picture the little table you expect. In every puzzle I'll show you what I want to see, so you can compare."),
+   T("**Builder trick: Build little, run often.** Write a tiny query, run it, then add one more piece. Like stacking Lego one block at a time.", {art:'tiny'}),
+   Q("Your long query shows an error. What's the best first move?", ["Delete everything and cry","Make it smaller and run each piece","Add random words until it works"], 1, "Exactly. Shrink it, find the broken block, fix it. Real engineers do this all day."),
+   T("You now know how to learn AND how to think. That's the hardest part! Now let's go meet the data. 🚀"),
+  ]},
+ ]},
+ {id:'w1', name:'Table Town', sub:'Tables, rows, columns and SELECT', color:'sky', lessons:[
+  {id:'w1a', title:'What is a Database?', steps:[
+   T("A **database** is like a super-organized toy cupboard. Inside are **tables**. A table is a grid, like your school timetable."),
+   T("This is the **pets** table in Pet Town. Each **row** goes across: it's one pet. Each **column** goes down: it's one fact about every pet.", {art:'anatomy'}),
+   T("Here's the full pets table. Take a look at the pets. Which one is your favorite?", {show:'pets'}),
+   Q("In the pets table, what is one ROW?", ["One pet with all its facts","All the names","The title of the table"], 0, "Yes! One row = one thing (here, one pet)."),
+   Q("What is a COLUMN?", ["A pillar holding up a building","One fact about every pet, like color","One pet"], 1, "Right. Columns are like 'color' or 'age'. (A pillar is a different kind of column 😄)"),
+   T("See the **id** column? Every pet has its own special number that no other pet has, like your roll number in class."),
+   Q("Momo has id 1. Can another pet also have id 1?", ["Yes","No, every id is unique"], 1, "Correct. Unique ids help us never mix up two pets with the same name."),
+   T("Pet Town also has an **owners** table. Look at **owner_id** in pets: it's the id of the pet's owner. That's how tables hold hands!", {show:'owners'}),
+   Q("Momo's owner_id is 1. Who is Momo's owner?", ["Riya","Kabir","Meera"], 0, "Yes! Owner with id 1 is Riya. You just connected two tables in your head."),
+  ]},
+  {id:'w1b', title:'Your First Spell: SELECT', steps:[
+   T("SQL is a spell language. Your first spell:", {code:"SELECT * FROM pets;"}),
+   T("It means: **\"Show me everything from the pets table.\"** The star `*` means \"all columns\". The `;` at the end is like a full stop."),
+   C("Cast your first spell! Type `SELECT * FROM pets;` and press **Run**.", "SELECT * FROM pets", {hints:["Type exactly: SELECT * FROM pets;","You can tap the colorful blocks under the editor instead of typing."]}),
+   T("WOW. You just talked to a database! 🎉 Engineers at big companies type spells like this every day."),
+   C("Now show everything from the **owners** table.", "SELECT * FROM owners", {hints:["Same spell, different table name.","SELECT * FROM owners;"]}),
+   T("Don't want everything? Name the columns you want, with commas between them:", {code:"SELECT name, animal FROM pets;"}),
+   B("Build a spell that shows just the **names** of all pets.", "SELECT name FROM pets", {extra:["*","animal","owners"]}),
+   C("Show the **name** and **color** of every pet.", "SELECT name, color FROM pets", {hints:["SELECT column1, column2 FROM table","SELECT name, color FROM pets;"]}),
+   C("Show each owner's **name** and **city**.", "SELECT name, city FROM owners", {hints:["Which table has cities? owners!","SELECT name, city FROM owners;"]}),
+   Q("What does `*` mean in `SELECT *`?", ["Multiply","All columns","A superstar pet"], 1, "Yes! * means all columns."),
+  ]},
+ ]},
+ {id:'w2', name:'Filter Forest', sub:'WHERE, AND, OR', color:'mint', lessons:[
+  {id:'w2a', title:'WHERE: The Magic Filter', steps:[
+   T("**WHERE** is a filter, like a sieve. Only the rows that pass the test come through.", {art:'filter'}),
+   T("To get only the dogs:", {code:"SELECT * FROM pets WHERE animal = 'dog';"}),
+   T("Words (text) go inside **'single quotes'**. Numbers don't need quotes. So it's `animal = 'dog'` but `age = 3`."),
+   C("Show all the **dogs** (all columns).", "SELECT * FROM pets WHERE animal = 'dog'", {hints:["Add WHERE animal = 'dog' after FROM pets","SELECT * FROM pets WHERE animal = 'dog';"]}),
+   C("Show only the **names** of the **cats**.", "SELECT name FROM pets WHERE animal = 'cat'", {hints:["SELECT name ... WHERE animal = 'cat'","SELECT name FROM pets WHERE animal = 'cat';"]}),
+   T("Comparing signs, just like in maths class:\n`=` equal, `>` bigger, `<` smaller, `>=` bigger or equal, `<=` smaller or equal, `!=` not equal."),
+   Q("What does this show?", ["Pets older than 5","Pets that are exactly 5","Only 5 pets"], 0, "Yes! > means 'bigger than'.", {code:"SELECT name FROM pets WHERE age > 5;"}),
+   C("Show the **names** of pets **older than 4**.", "SELECT name FROM pets WHERE age > 4", {hints:["Use age > 4","SELECT name FROM pets WHERE age > 4;"]}),
+   C("Show **all columns** for pets that weigh **less than 1** kg. Tiny pets!", "SELECT * FROM pets WHERE weight_kg < 1", {hints:["The column is weight_kg","SELECT * FROM pets WHERE weight_kg < 1;"]}),
+   C("Show the **name** and **animal** of pets that are **not dogs**.", "SELECT name, animal FROM pets WHERE animal != 'dog'", {hints:["!= means not equal","SELECT name, animal FROM pets WHERE animal != 'dog';"]}),
+  ]},
+  {id:'w2b', title:'AND, OR, Brackets', steps:[
+   T("**AND** means BOTH things must be true. `animal = 'cat' AND color = 'white'` gives only white cats."),
+   C("Show **all columns** for **white cats**.", "SELECT * FROM pets WHERE animal = 'cat' AND color = 'white'", {hints:["Two tests joined by AND","SELECT * FROM pets WHERE animal = 'cat' AND color = 'white';"]}),
+   T("**OR** means at least ONE is true. `animal = 'cat' OR animal = 'dog'` gives cats and dogs together."),
+   Q("You order ice cream with chocolate AND sprinkles. What do you get?", ["Only chocolate","Chocolate and sprinkles, both","One of them, the shop picks"], 1, "Yes. AND = both. OR would be 'either one'."),
+   C("Show the **name** and **animal** of all **cats and parrots**.", "SELECT name, animal FROM pets WHERE animal = 'cat' OR animal = 'parrot'", {hints:["animal = 'cat' OR animal = 'parrot'","SELECT name, animal FROM pets WHERE animal = 'cat' OR animal = 'parrot';"]}),
+   C("Show the **names** of **dogs older than 2**.", "SELECT name FROM pets WHERE animal = 'dog' AND age > 2", {hints:["Both must be true, so AND","SELECT name FROM pets WHERE animal = 'dog' AND age > 2;"]}),
+   T("Mixing AND with OR? Use **brackets**, just like in maths. The brackets get checked first:", {code:"WHERE (animal = 'cat' OR animal = 'dog') AND age < 3"}),
+   C("Show the **names** of **cats or dogs** that are **younger than 3**.", "SELECT name FROM pets WHERE (animal = 'cat' OR animal = 'dog') AND age < 3", {hints:["Put the OR part inside ( )","SELECT name FROM pets WHERE (animal = 'cat' OR animal = 'dog') AND age < 3;"]}),
+  ]},
+ ]},
+ {id:'w3', name:'Sorting Station', sub:'ORDER BY, LIMIT, DISTINCT, AS', color:'sun', lessons:[
+  {id:'w3a', title:'Line Up! ORDER BY', steps:[
+   T("**ORDER BY** lines rows up, like kids standing by height. **ASC** = small to big (that's the normal way). **DESC** = big to small.", {art:'sort'}),
+   T("Lightest pets first:", {code:"SELECT name, weight_kg FROM pets ORDER BY weight_kg;"}),
+   C("Show **name** and **weight_kg**, **heaviest first**.", "SELECT name, weight_kg FROM pets ORDER BY weight_kg DESC", {hints:["DESC means big to small","SELECT name, weight_kg FROM pets ORDER BY weight_kg DESC;"]}),
+   C("Show owner **names** in **A to Z** order.", "SELECT name FROM owners ORDER BY name", {hints:["Text sorts A to Z with ASC","SELECT name FROM owners ORDER BY name;"]}),
+   T("**LIMIT** chops the list. `LIMIT 3` keeps only the first 3 rows. Perfect for \"Top 3\" lists!"),
+   C("Show the **3 heaviest** pets: **name** and **weight_kg**.", "SELECT name, weight_kg FROM pets ORDER BY weight_kg DESC LIMIT 3", {hints:["First sort heaviest first, then LIMIT 3","SELECT name, weight_kg FROM pets ORDER BY weight_kg DESC LIMIT 3;"]}),
+   C("Which pet is the **lightest**? Show just its **name** (1 row).", "SELECT name FROM pets ORDER BY weight_kg LIMIT 1", {hints:["Sort lightest first, keep 1","SELECT name FROM pets ORDER BY weight_kg LIMIT 1;"]}),
+   Q("Where does LIMIT go?", ["At the very end","Right after SELECT","Before FROM"], 0, "Yes. SELECT → FROM → WHERE → ORDER BY → LIMIT. That's the order of the spell."),
+  ]},
+  {id:'w3b', title:'DISTINCT and Nicknames', steps:[
+   T("**DISTINCT** removes repeats. `SELECT DISTINCT animal FROM pets` shows each animal only once."),
+   C("Show each **different color** of pets, only once each.", "SELECT DISTINCT color FROM pets", {hints:["SELECT DISTINCT column FROM table","SELECT DISTINCT color FROM pets;"]}),
+   T("**AS** gives a column a nickname. You can even do maths:", {code:"SELECT name, weight_kg * 1000 AS grams FROM pets;"}),
+   C("Show each pet's **name** and its weight in **grams** (`weight_kg * 1000`).", "SELECT name, weight_kg * 1000 AS grams FROM pets", {hints:["Multiply with *","SELECT name, weight_kg * 1000 AS grams FROM pets;"]}),
+   C("Show each **different city** of owners, in **A to Z** order.", "SELECT DISTINCT city FROM owners ORDER BY city", {hints:["DISTINCT, then ORDER BY","SELECT DISTINCT city FROM owners ORDER BY city;"]}),
+   Q("Pet ages in dog years! Which line is correct?", ["SELECT name, age * 7 AS dog_years FROM pets","SELECT name AS age * 7 FROM pets","SELECT dog_years FROM pets"], 0, "Yes! Do the maths first, then give it a nickname with AS."),
+  ]},
+ ]},
+ {id:'w4', name:'Pattern Park', sub:'LIKE, IN, BETWEEN, NULL', color:'pink', lessons:[
+  {id:'w4a', title:'LIKE: Find by Pattern', steps:[
+   T("**LIKE** finds patterns in words. The `%` sign means \"anything can go here\".\n`'M%'` starts with M\n`'%o'` ends with o\n`'%oo%'` has oo inside"),
+   C("Show the **names** of pets that **start with M**.", "SELECT name FROM pets WHERE name LIKE 'M%'", {hints:["name LIKE 'M%'","SELECT name FROM pets WHERE name LIKE 'M%';"]}),
+   C("Show the **names** of pets that **end with o**.", "SELECT name FROM pets WHERE name LIKE '%o'", {hints:["Put the % before the o","SELECT name FROM pets WHERE name LIKE '%o';"]}),
+   Q("What does `name LIKE '%a%'` find?", ["Names with an a anywhere","Names starting with a","Only the name 'a'"], 0, "Yes! % on both sides means 'anywhere in the middle'."),
+  ]},
+  {id:'w4b', title:'IN and BETWEEN', steps:[
+   T("**IN** is a shortcut for lots of ORs:", {code:"WHERE animal IN ('cat', 'dog', 'fish')"}),
+   C("Show **all columns** for pets that are a **cat, fish or rabbit**.", "SELECT * FROM pets WHERE animal IN ('cat','fish','rabbit')", {hints:["animal IN ('cat','fish','rabbit')","SELECT * FROM pets WHERE animal IN ('cat','fish','rabbit');"]}),
+   T("**BETWEEN** picks a range, and includes both ends:", {code:"WHERE age BETWEEN 2 AND 4"}),
+   C("Show **name** and **age** of pets aged **between 2 and 5**.", "SELECT name, age FROM pets WHERE age BETWEEN 2 AND 5", {hints:["age BETWEEN 2 AND 5","SELECT name, age FROM pets WHERE age BETWEEN 2 AND 5;"]}),
+   C("Show **names** of owners who live in **Delhi or Mumbai** (use IN).", "SELECT name FROM owners WHERE city IN ('Delhi','Mumbai')", {hints:["city IN ('Delhi','Mumbai')","SELECT name FROM owners WHERE city IN ('Delhi','Mumbai');"]}),
+  ]},
+  {id:'w4c', title:'NULL: The Mystery Box', steps:[
+   T("**NULL** means \"nobody knows\". It's an empty mystery box. Coco the rabbit is a stray, so her owner_id is NULL. 🐰", {art:'null'}),
+   T("Funny rule: you can't use `= NULL`. Nothing equals a mystery! Use **IS NULL** or **IS NOT NULL**."),
+   Q("Which finds pets with no owner?", ["WHERE owner_id = NULL","WHERE owner_id IS NULL","WHERE owner_id = 0"], 1, "Yes! IS NULL is the only way to catch an empty box."),
+   C("Find **all columns** for pets with **no owner**.", "SELECT * FROM pets WHERE owner_id IS NULL", {hints:["owner_id IS NULL","SELECT * FROM pets WHERE owner_id IS NULL;"]}),
+   C("Show **names** of pets that **do** have an owner.", "SELECT name FROM pets WHERE owner_id IS NOT NULL", {hints:["IS NOT NULL","SELECT name FROM pets WHERE owner_id IS NOT NULL;"]}),
+  ]},
+ ]},
+ {id:'w5', name:'Counting Castle', sub:'COUNT, SUM, AVG, GROUP BY, HAVING', color:'orange', lessons:[
+  {id:'w5a', title:'Calculator Spells', steps:[
+   T("These are calculator spells. They squish many rows into ONE answer:\n`COUNT(*)` how many\n`SUM(x)` add up\n`AVG(x)` average\n`MIN(x)` smallest\n`MAX(x)` biggest"),
+   T("How many pets live in Pet Town?", {code:"SELECT COUNT(*) FROM pets;"}),
+   C("How many **dogs** are there?", "SELECT COUNT(*) FROM pets WHERE animal = 'dog'", {hints:["COUNT(*) with a WHERE filter","SELECT COUNT(*) FROM pets WHERE animal = 'dog';"]}),
+   C("What is the **total weight** of all pets? (use SUM)", "SELECT SUM(weight_kg) FROM pets", {hints:["SUM(weight_kg)","SELECT SUM(weight_kg) FROM pets;"]}),
+   C("What is the **average age** of **cats**?", "SELECT AVG(age) FROM pets WHERE animal = 'cat'", {hints:["AVG(age) and WHERE","SELECT AVG(age) FROM pets WHERE animal = 'cat';"]}),
+   C("In one query, show the **oldest age** and the **youngest age** (MAX and MIN).", "SELECT MAX(age), MIN(age) FROM pets", {hints:["Two spells with a comma between","SELECT MAX(age), MIN(age) FROM pets;"]}),
+   Q("How many fish are there? Look at the pets table in your head!", ["0","1","12"], 1, "Yes! Only Bubbles. 🐠"),
+  ]},
+  {id:'w5b', title:'GROUP BY: Candy Buckets', steps:[
+   T("**GROUP BY** puts rows into buckets, then counts each bucket. Like sorting candies by color and counting each pile!", {art:'buckets'}),
+   T("Count the pets of each animal:", {code:"SELECT animal, COUNT(*) FROM pets GROUP BY animal;"}),
+   C("Count **how many pets** of **each animal** there are. Show animal and count.", "SELECT animal, COUNT(*) FROM pets GROUP BY animal", {hints:["GROUP BY animal","SELECT animal, COUNT(*) FROM pets GROUP BY animal;"]}),
+   C("Show **each color** and **how many** pets have it.", "SELECT color, COUNT(*) FROM pets GROUP BY color", {hints:["Same idea, bucket by color","SELECT color, COUNT(*) FROM pets GROUP BY color;"]}),
+   C("For **each animal**, show the **average weight**.", "SELECT animal, AVG(weight_kg) FROM pets GROUP BY animal", {hints:["AVG(weight_kg) with GROUP BY animal","SELECT animal, AVG(weight_kg) FROM pets GROUP BY animal;"]}),
+   T("**HAVING** is a filter for buckets. WHERE checks rows *before* grouping. HAVING checks the buckets *after* grouping.", {code:"SELECT animal, COUNT(*) FROM pets\nGROUP BY animal\nHAVING COUNT(*) > 2;"}),
+   C("Show the **animals** that have **more than 2 pets**, with their count.", "SELECT animal, COUNT(*) FROM pets GROUP BY animal HAVING COUNT(*) > 2", {hints:["HAVING COUNT(*) > 2 goes after GROUP BY","SELECT animal, COUNT(*) FROM pets GROUP BY animal HAVING COUNT(*) > 2;"]}),
+   Q("You want buckets with more than 2 pets. Which word filters buckets?", ["WHERE","HAVING","LIMIT"], 1, "Yes. HAVING is for groups."),
+  ]},
+ ]},
+ {id:'w6', name:'Join Junction', sub:'JOIN and LEFT JOIN', color:'grape', lessons:[
+  {id:'w6a', title:'Tables Holding Hands', steps:[
+   T("Pets know their **owner_id**, but not the owner's **name**. To get both, we **JOIN** the tables. They hold hands where `pets.owner_id = owners.id`.", {art:'join'}),
+   T("Here's the spell:", {code:"SELECT pets.name, owners.name\nFROM pets\nJOIN owners ON pets.owner_id = owners.id;"}),
+   C("Show each **pet's name** and its **owner's name**.", "SELECT pets.name, owners.name FROM pets JOIN owners ON pets.owner_id = owners.id", {hints:["JOIN owners ON pets.owner_id = owners.id","SELECT pets.name, owners.name FROM pets JOIN owners ON pets.owner_id = owners.id;"]}),
+   T("Typing long table names is tiring. Give them short nicknames: `FROM pets p JOIN owners o`. Then write `p.name` and `o.name`."),
+   C("Show the **names of pets** whose owner lives in **Ranchi**.", "SELECT p.name FROM pets p JOIN owners o ON p.owner_id = o.id WHERE o.city = 'Ranchi'", {hints:["JOIN first, then WHERE o.city = 'Ranchi'","SELECT p.name FROM pets p JOIN owners o ON p.owner_id = o.id WHERE o.city = 'Ranchi';"]}),
+   C("Show each **owner's name** and their **pet's name**, but only for **dogs**.", "SELECT o.name, p.name FROM pets p JOIN owners o ON p.owner_id = o.id WHERE p.animal = 'dog'", {hints:["JOIN, then WHERE p.animal = 'dog'","SELECT o.name, p.name FROM pets p JOIN owners o ON p.owner_id = o.id WHERE p.animal = 'dog';"]}),
+   Q("Coco has no owner (NULL). Does Coco show up in a normal JOIN with owners?", ["Yes","No"], 1, "Right. A normal JOIN only keeps rows that found a hand to hold."),
+  ]},
+  {id:'w6b', title:'LEFT JOIN: Nobody Left Behind', steps:[
+   T("**LEFT JOIN** keeps EVERY row from the left table, even without a partner. Missing partners show up as NULL."),
+   C("Show every **owner's name** and their **pet's name**, including owners with **no pets**.", "SELECT o.name, p.name FROM owners o LEFT JOIN pets p ON p.owner_id = o.id", {hints:["Start FROM owners, then LEFT JOIN pets","SELECT o.name, p.name FROM owners o LEFT JOIN pets p ON p.owner_id = o.id;"]}),
+   C("Find the **names** of owners who have **no pets at all**.", "SELECT o.name FROM owners o LEFT JOIN pets p ON p.owner_id = o.id WHERE p.id IS NULL", {hints:["LEFT JOIN, then keep rows where the pet is NULL","SELECT o.name FROM owners o LEFT JOIN pets p ON p.owner_id = o.id WHERE p.id IS NULL;"]}),
+   T("The **snacks** table lists treats each pet ate. It has **pet_id**. Let's join pets with snacks!", {show:'snacks'}),
+   C("Show each **pet name** with the **snack** it ate.", "SELECT p.name, s.snack FROM pets p JOIN snacks s ON s.pet_id = p.id", {hints:["JOIN snacks s ON s.pet_id = p.id","SELECT p.name, s.snack FROM pets p JOIN snacks s ON s.pet_id = p.id;"]}),
+   C("Show the **total snack money** spent on each pet: **pet name** and `SUM(qty * price)`.", "SELECT p.name, SUM(s.qty * s.price) FROM pets p JOIN snacks s ON s.pet_id = p.id GROUP BY p.name", {hints:["JOIN, then GROUP BY p.name","SELECT p.name, SUM(s.qty * s.price) FROM pets p JOIN snacks s ON s.pet_id = p.id GROUP BY p.name;"]}),
+  ]},
+ ]},
+ {id:'w7', name:"Builder's Workshop", sub:'INSERT, UPDATE, DELETE, CREATE', color:'sky', lessons:[
+  {id:'w7a', title:'INSERT: Add a New Friend', steps:[
+   T("Until now we only ASKED questions. Now we CHANGE data! **INSERT INTO** adds a new row:", {code:"INSERT INTO pets (id, name, animal, age, color, weight_kg, owner_id)\nVALUES (13, 'Golu', 'dog', 1, 'brown', 6, 7);"}),
+   C("A new kitten! Add a pet: id **13**, name **'Kiwi'**, animal **'cat'**, age **1**, color **'grey'**, weight_kg **2**, owner_id **7**.", "INSERT INTO pets (id, name, animal, age, color, weight_kg, owner_id) VALUES (13, 'Kiwi', 'cat', 1, 'grey', 2, 7)", {check:"SELECT * FROM pets WHERE id = 13", hints:["Copy the example and change the values","INSERT INTO pets (id, name, animal, age, color, weight_kg, owner_id) VALUES (13, 'Kiwi', 'cat', 1, 'grey', 2, 7);"]}),
+   C("Add a new owner: id **8**, name **'Tara'**, city **'Goa'**, age **28**.", "INSERT INTO owners (id, name, city, age) VALUES (8, 'Tara', 'Goa', 28)", {check:"SELECT * FROM owners WHERE id = 8", hints:["INSERT INTO owners (id, name, city, age) VALUES (...)","INSERT INTO owners (id, name, city, age) VALUES (8, 'Tara', 'Goa', 28);"]}),
+  ]},
+  {id:'w7b', title:'UPDATE and DELETE', steps:[
+   T("**UPDATE** changes values. ALWAYS use WHERE, or you change EVERY row! 😱", {code:"UPDATE pets SET color = 'pink' WHERE name = 'Momo';"}),
+   Q("What happens with `UPDATE pets SET age = 1` with no WHERE?", ["Only one pet changes","Every pet becomes 1 year old","Nothing happens"], 1, "Yes! Every single pet would become a baby. WHERE is your seatbelt."),
+   C("Momo had a birthday! 🎂 Set **Momo's age to 4**.", "UPDATE pets SET age = 4 WHERE name = 'Momo'", {check:"SELECT id, name, age FROM pets ORDER BY id", hints:["UPDATE pets SET age = 4 WHERE ...","UPDATE pets SET age = 4 WHERE name = 'Momo';"]}),
+   C("The parrots painted themselves! Make every **parrot's color 'rainbow'**.", "UPDATE pets SET color = 'rainbow' WHERE animal = 'parrot'", {check:"SELECT id, name, color FROM pets ORDER BY id", hints:["WHERE animal = 'parrot'","UPDATE pets SET color = 'rainbow' WHERE animal = 'parrot';"]}),
+   T("**DELETE** removes rows. WHERE is your seatbelt again!", {code:"DELETE FROM pets WHERE name = 'Rocky';"}),
+   C("Bubbles the fish swam off to the ocean. 🌊 **Delete Bubbles**.", "DELETE FROM pets WHERE name = 'Bubbles'", {check:"SELECT id, name FROM pets ORDER BY id", hints:["DELETE FROM pets WHERE ...","DELETE FROM pets WHERE name = 'Bubbles';"]}),
+  ]},
+  {id:'w7c', title:'CREATE TABLE: Build Your Own', steps:[
+   T("**CREATE TABLE** makes a brand-new table. You choose the column names and their types:\n`INTEGER` whole numbers\n`TEXT` words\n`REAL` decimals", {code:"CREATE TABLE games (id INTEGER, title TEXT, rating REAL);"}),
+   C("Create a table **toys** with columns **id INTEGER**, **name TEXT**, **price REAL**. Then insert one toy: **1, 'Yo-yo', 50**. (Two spells, each ending with ;)", "CREATE TABLE toys (id INTEGER, name TEXT, price REAL); INSERT INTO toys VALUES (1, 'Yo-yo', 50)", {check:"SELECT * FROM toys", hints:["First CREATE TABLE toys (...); then INSERT INTO toys VALUES (...);","CREATE TABLE toys (id INTEGER, name TEXT, price REAL);\nINSERT INTO toys VALUES (1, 'Yo-yo', 50);"]}),
+   Q("Which type would you use for a pet's name?", ["INTEGER","TEXT","REAL"], 1, "Yes! Words are TEXT."),
+  ]},
+ ]},
+ {id:'w8', name:'Wizard Tower', sub:'CASE, subqueries, WITH, window functions', color:'mint', lessons:[
+  {id:'w8a', title:'CASE: If This, Then That', steps:[
+   T("**CASE** lets SQL make decisions, like an if-else:", {code:"SELECT name,\n  CASE WHEN weight_kg > 10 THEN 'big' ELSE 'small' END AS size\nFROM pets;"}),
+   C("Show each pet's **name** and a **size**: **'big'** if weight_kg > 5, else **'small'**.", "SELECT name, CASE WHEN weight_kg > 5 THEN 'big' ELSE 'small' END AS size FROM pets", {hints:["CASE WHEN weight_kg > 5 THEN 'big' ELSE 'small' END","SELECT name, CASE WHEN weight_kg > 5 THEN 'big' ELSE 'small' END AS size FROM pets;"]}),
+   C("Label ages: **'baby'** if age < 2, **'adult'** if age < 10, else **'grandpa'**. Show **name** and the label.", "SELECT name, CASE WHEN age < 2 THEN 'baby' WHEN age < 10 THEN 'adult' ELSE 'grandpa' END FROM pets", {hints:["You can have many WHENs in one CASE","SELECT name, CASE WHEN age < 2 THEN 'baby' WHEN age < 10 THEN 'adult' ELSE 'grandpa' END AS label FROM pets;"]}),
+  ]},
+  {id:'w8b', title:'Subqueries: Question Inside a Question', steps:[
+   T("A **subquery** is a question inside a question, like a little doll inside a bigger doll. The inner one runs first:", {code:"SELECT name FROM pets\nWHERE weight_kg > (SELECT AVG(weight_kg) FROM pets);"}),
+   C("Show the **names** of pets **heavier than the average** weight.", "SELECT name FROM pets WHERE weight_kg > (SELECT AVG(weight_kg) FROM pets)", {hints:["Put SELECT AVG(weight_kg) FROM pets inside ( )","SELECT name FROM pets WHERE weight_kg > (SELECT AVG(weight_kg) FROM pets);"]}),
+   C("Show **names** of pets whose owner lives in **Delhi**, using **IN** with a subquery (no JOIN!).", "SELECT name FROM pets WHERE owner_id IN (SELECT id FROM owners WHERE city = 'Delhi')", {hints:["owner_id IN (SELECT id FROM owners WHERE ...)","SELECT name FROM pets WHERE owner_id IN (SELECT id FROM owners WHERE city = 'Delhi');"]}),
+   C("Find the **name** of the **oldest pet** using a subquery with MAX.", "SELECT name FROM pets WHERE age = (SELECT MAX(age) FROM pets)", {hints:["WHERE age = (SELECT MAX(age) FROM pets)","SELECT name FROM pets WHERE age = (SELECT MAX(age) FROM pets);"]}),
+  ]},
+  {id:'w8c', title:'WITH and Window Magic', steps:[
+   T("**WITH** gives a query a name, so you can use it like a table. Neat and tidy!", {code:"WITH old_pets AS (\n  SELECT * FROM pets WHERE age > 5\n)\nSELECT name FROM old_pets;"}),
+   C("Using **WITH**, make **big_pets** (weight_kg > 5), then select their **names**.", "WITH big_pets AS (SELECT * FROM pets WHERE weight_kg > 5) SELECT name FROM big_pets", {hints:["WITH big_pets AS ( ... ) SELECT name FROM big_pets","WITH big_pets AS (SELECT * FROM pets WHERE weight_kg > 5) SELECT name FROM big_pets;"]}),
+   T("**Window functions** look at the neighbors without squishing rows. `RANK() OVER (ORDER BY weight_kg DESC)` gives each pet a race position!", {code:"SELECT name, RANK() OVER (ORDER BY age DESC) AS place\nFROM pets;"}),
+   C("Show **name**, **weight_kg**, and the **rank by weight** (heaviest = 1).", "SELECT name, weight_kg, RANK() OVER (ORDER BY weight_kg DESC) FROM pets", {hints:["RANK() OVER (ORDER BY weight_kg DESC)","SELECT name, weight_kg, RANK() OVER (ORDER BY weight_kg DESC) AS r FROM pets;"]}),
+   T("**PARTITION BY** makes a separate race in each bucket: `RANK() OVER (PARTITION BY animal ORDER BY weight_kg DESC)` ranks cats among cats and dogs among dogs."),
+   C("For **each animal**, rank the pets by weight (heaviest = 1). Show **animal**, **name**, and the **rank**.", "SELECT animal, name, RANK() OVER (PARTITION BY animal ORDER BY weight_kg DESC) FROM pets", {hints:["OVER (PARTITION BY animal ORDER BY weight_kg DESC)","SELECT animal, name, RANK() OVER (PARTITION BY animal ORDER BY weight_kg DESC) AS r FROM pets;"]}),
+   T("You just used real wizard-level SQL. Data engineers use window functions every single day! 🧙"),
+  ]},
+ ]},
+];
+
+const BOSSES = [
+ {id:'boss1', after:'w2', name:'The Bug King', color:'#7CD45A', acc:'crown', taunt:"Hahaha! Nobody can filter pets like ME. You'll never beat my test!", steps:[
+  Q("What does `SELECT * FROM owners` show?", ["Only the owner names","Every column of the owners table","The star owners"], 1, "Boom! * = all columns."),
+  C("Show the **names** of all **parrots**.", "SELECT name FROM pets WHERE animal = 'parrot'"),
+  Q("Which one is written correctly?", ["WHERE animal = dog","WHERE animal = 'dog'","WHERE 'animal' = dog"], 1, "Text goes in single quotes!"),
+  C("Show **names** of pets **older than 5** that weigh **less than 10** kg.", "SELECT name FROM pets WHERE age > 5 AND weight_kg < 10"),
+  C("Show **name** and **color** of all **cats and rabbits**.", "SELECT name, color FROM pets WHERE animal = 'cat' OR animal = 'rabbit'"),
+  C("Show the **names** of owners from **Delhi**.", "SELECT name FROM owners WHERE city = 'Delhi'"),
+ ]},
+ {id:'boss2', after:'w4', name:'The Mix-Up Monster', color:'#FF8A3D', acc:'horns', taunt:"Grrr! I mixed up ALL the rows. You can't sort my mess!", steps:[
+  C("Show the **2 oldest** pets: **name** and **age**, oldest first.", "SELECT name, age FROM pets ORDER BY age DESC LIMIT 2"),
+  C("Show each **different animal** once, in **A to Z** order.", "SELECT DISTINCT animal FROM pets ORDER BY animal"),
+  C("Show **names** of pets that have the letter **i** anywhere in the name.", "SELECT name FROM pets WHERE name LIKE '%i%'"),
+  Q("Which is true about NULL?", ["NULL = NULL is true","Use IS NULL to find it","NULL is the same as 0"], 1, "Yes! NULL is a mystery box. Only IS NULL can find it."),
+  C("Show **names** of **white** pets aged **between 1 and 3**.", "SELECT name FROM pets WHERE color = 'white' AND age BETWEEN 1 AND 3"),
+  C("Show **name** and **age** of owners in **Ranchi or Pune** (use IN), **oldest first**.", "SELECT name, age FROM owners WHERE city IN ('Ranchi','Pune') ORDER BY age DESC"),
+ ]},
+ {id:'boss3', after:'w6', name:'Count Countula', color:'#8B6CFF', acc:'cape', taunt:"Ah-ha-ha! I am Count Countula! I count EVERYTHING. Can you count better than me?", steps:[
+  C("Show each **owner's name** and **how many pets** they have (only owners with pets).", "SELECT o.name, COUNT(*) FROM owners o JOIN pets p ON p.owner_id = o.id GROUP BY o.id, o.name"),
+  C("Show each **city** and **how many owners** live there.", "SELECT city, COUNT(*) FROM owners GROUP BY city"),
+  C("Show each **animal** and its **average weight**, but only animals whose average is **more than 3**.", "SELECT animal, AVG(weight_kg) FROM pets GROUP BY animal HAVING AVG(weight_kg) > 3"),
+  Q("WHERE vs HAVING: which one filters groups AFTER GROUP BY?", ["WHERE","HAVING"], 1, "Correct! HAVING is for buckets."),
+  C("Show the **pet name** and the owner's **city** for pets that ate a **'bone'** snack.", "SELECT p.name, o.city FROM pets p JOIN owners o ON p.owner_id = o.id JOIN snacks s ON s.pet_id = p.id WHERE s.snack = 'bone'"),
+  C("Find the **names** of owners with **no pets**.", "SELECT o.name FROM owners o LEFT JOIN pets p ON p.owner_id = o.id WHERE p.id IS NULL"),
+ ]},
+ {id:'boss4', after:'w8', name:'The Mega Bug', color:'#FF5C8A', acc:'crown', final:true, taunt:"I am the MEGA BUG, the final boss! Only a true SQL hero can defeat me!", steps:[
+  C("Add a pet: id **20**, name **'Pixel'**, animal **'robot'**, age **0**, color **'silver'**, weight_kg **9**, owner_id **7**.", "INSERT INTO pets (id, name, animal, age, color, weight_kg, owner_id) VALUES (20, 'Pixel', 'robot', 0, 'silver', 9, 7)", {check:"SELECT * FROM pets WHERE id = 20"}),
+  C("Every cat ate too much! Add **1** to the **weight_kg** of all **cats**.", "UPDATE pets SET weight_kg = weight_kg + 1 WHERE animal = 'cat'", {check:"SELECT id, weight_kg FROM pets ORDER BY id"}),
+  C("Show **names** of pets **heavier than the average**.", "SELECT name FROM pets WHERE weight_kg > (SELECT AVG(weight_kg) FROM pets)"),
+  C("Count the **'big'** (weight_kg > 5) and **'small'** pets. Show **size** and **count**.", "SELECT CASE WHEN weight_kg > 5 THEN 'big' ELSE 'small' END AS size, COUNT(*) FROM pets GROUP BY size"),
+  Q("What does LEFT JOIN keep?", ["Only matching rows","Every row of the left table, matched or not","Only the right table"], 1, "Yes! Nobody gets left behind."),
+  C("For **each animal**, show the **animal** and **name** of its **heaviest** pet.", "SELECT animal, name FROM (SELECT animal, name, RANK() OVER (PARTITION BY animal ORDER BY weight_kg DESC) AS r FROM pets) WHERE r = 1"),
+  C("Show each owner's **name**, their **number of pets**, and a **DENSE_RANK** by that number (most pets = 1). Only owners with pets.", "SELECT o.name, COUNT(*) AS n, DENSE_RANK() OVER (ORDER BY COUNT(*) DESC) FROM owners o JOIN pets p ON p.owner_id = o.id GROUP BY o.id, o.name"),
+ ]},
+];
+
+/* Arena: HackerRank / LeetCode style */
+const ARENA = [
+ {id:'a1', lvl:'easy', title:'Big Dogs', need:'w2b', q:"Show the **names** of **dogs** that weigh **more than 10** kg.", sol:"SELECT name FROM pets WHERE animal = 'dog' AND weight_kg > 10", tables:['pets']},
+ {id:'a2', lvl:'easy', title:'Count the Cats', need:'w5a', q:"Return the number of cats as a single column named **cat_count**.", sol:"SELECT COUNT(*) AS cat_count FROM pets WHERE animal = 'cat'", tables:['pets']},
+ {id:'a3', lvl:'easy', title:'High Earners', need:'w3a', q:"Show **name** and **salary** of employees earning **more than 100000**, highest salary first.", sol:"SELECT name, salary FROM employees WHERE salary > 100000 ORDER BY salary DESC", tables:['employees']},
+ {id:'a4', lvl:'easy', title:'Pet-less People', need:'w6b', q:"Show the **names** of owners who have **no pets**.", sol:"SELECT name FROM owners WHERE id NOT IN (SELECT owner_id FROM pets WHERE owner_id IS NOT NULL)", tables:['owners','pets']},
+ {id:'a5', lvl:'medium', title:'Second Highest Salary', need:'w8b', q:"Find the **second highest distinct salary** in the employees table. Return one column, one row.", sol:"SELECT MAX(salary) FROM employees WHERE salary < (SELECT MAX(salary) FROM employees)", tables:['employees']},
+ {id:'a6', lvl:'medium', title:'Richer Than the Boss', need:'w6a', q:"Find employees who earn **more than their own manager**. Show their **name**. (Hint: join employees with itself!)", sol:"SELECT e.name FROM employees e JOIN employees m ON e.manager_id = m.id WHERE e.salary > m.salary", tables:['employees']},
+ {id:'a7', lvl:'medium', title:'Duplicate Salaries', need:'w5b', q:"Find every **salary** that appears **more than once**.", sol:"SELECT salary FROM employees GROUP BY salary HAVING COUNT(*) > 1", tables:['employees']},
+ {id:'a8', lvl:'medium', title:'Department Top Earner', need:'w8b', q:"For each **dept**, show **dept**, **name**, and **salary** of the highest earner.", sol:"SELECT dept, name, salary FROM employees e WHERE salary = (SELECT MAX(salary) FROM employees WHERE dept = e.dept)", tables:['employees']},
+ {id:'a9', lvl:'medium', title:'Snack Spenders', need:'w6b', q:"Show the **names** of owners who spent **more than 85** in total on snacks for all their pets (qty × price).", sol:"SELECT o.name FROM owners o JOIN pets p ON p.owner_id = o.id JOIN snacks s ON s.pet_id = p.id GROUP BY o.id, o.name HAVING SUM(s.qty * s.price) > 85", tables:['owners','pets','snacks']},
+ {id:'a10', lvl:'hard', title:'Class Rank', need:'w8c', q:"Show each **student**, their **total** marks, and their **DENSE_RANK** (highest total = 1), ordered by rank.", sol:"SELECT student, SUM(marks) AS total, DENSE_RANK() OVER (ORDER BY SUM(marks) DESC) AS rnk FROM scores GROUP BY student ORDER BY rnk", tables:['scores']},
+ {id:'a11', lvl:'hard', title:'Subject Toppers', need:'w8c', q:"For each **subject**, show the **subject**, **student** and **marks** of the top scorer.", sol:"SELECT subject, student, marks FROM (SELECT subject, student, marks, RANK() OVER (PARTITION BY subject ORDER BY marks DESC) AS r FROM scores) WHERE r = 1", tables:['scores']},
+ {id:'a12', lvl:'hard', title:'Running Total', need:'w8c', q:"For each snack row, show **id** and a **running total** of money spent (qty × price), ordered by id.", sol:"SELECT id, SUM(qty * price) OVER (ORDER BY id) AS running FROM snacks ORDER BY id", tables:['snacks']},
+ {id:'a13', lvl:'hard', title:'Above Subject Average', need:'w8b', q:"Show **student** and **subject** for every score that is **above the average** for that subject.", sol:"SELECT student, subject FROM scores s WHERE marks > (SELECT AVG(marks) FROM scores WHERE subject = s.subject)", tables:['scores']},
+];
+
+/* Real-life projects */
+const PROJECTS = [
+ {id:'p1', title:'Pizza Palace Manager', db:'pizza', color:'orange', art:'pizza', blurb:"You're the new manager of Pizza Palace in Ranchi. Use SQL to run the shop!", steps:[
+  T("Welcome, Manager! 🍕 Pizza Palace has 3 tables: **customers**, **menu** and **orders**. Let's look at the menu first.", {show:'menu'}),
+  C("A customer wants **veg** food. Show **item** and **price** of veg items (veg = 1), **cheapest first**.", "SELECT item, price FROM menu WHERE veg = 1 ORDER BY price"),
+  C("How busy is each day? Show each **day** and the **number of orders**.", "SELECT day, COUNT(*) FROM orders GROUP BY day"),
+  C("Which pizza earns the most? Show **item** and **revenue** (`SUM(qty * price)`), **highest first**.", "SELECT m.item, SUM(o.qty * m.price) AS revenue FROM orders o JOIN menu m ON o.item_id = m.id GROUP BY m.item ORDER BY revenue DESC"),
+  C("Find your **best customer**: the **name** of the one who spent the most money (1 row).", "SELECT c.name FROM customers c JOIN orders o ON o.customer_id = c.id JOIN menu m ON o.item_id = m.id GROUP BY c.id, c.name ORDER BY SUM(o.qty * m.price) DESC LIMIT 1"),
+  C("New on the menu! Add id **7**, **'Paneer Tikka'**, price **250**, veg **1**.", "INSERT INTO menu VALUES (7, 'Paneer Tikka', 250, 1)", {check:"SELECT * FROM menu ORDER BY id"}),
+  C("Send a coupon to customers who **never ordered**. Show their **name** and **area**.", "SELECT name, area FROM customers WHERE id NOT IN (SELECT customer_id FROM orders)"),
+  T("Pizza Palace is booming thanks to you! 📈 Real shops use exactly these queries to decide what to cook and who to send offers to."),
+ ]},
+ {id:'p2', title:'School Library Detective', db:'library', color:'sky', art:'book', blurb:"The school library is a mess. Find missing books and the most popular stories.", steps:[
+  T("The librarian needs help! 📚 We have **books**, **students** and **loans** (who borrowed what, and when they returned it).", {show:'loans'}),
+  C("Show **title** and **author** of all **fantasy** books.", "SELECT title, author FROM books WHERE genre = 'fantasy'"),
+  C("Who **hasn't returned** a book? Show the student **name** and the book **title** (returned IS NULL).", "SELECT s.name, b.title FROM loans l JOIN students s ON l.student_id = s.id JOIN books b ON l.book_id = b.id WHERE l.returned IS NULL"),
+  C("Which book was borrowed the **most**? Show its **title** (1 row).", "SELECT b.title FROM loans l JOIN books b ON l.book_id = b.id GROUP BY b.id, b.title ORDER BY COUNT(*) DESC LIMIT 1"),
+  C("Which books were **never borrowed**? Show their **titles**.", "SELECT b.title FROM books b LEFT JOIN loans l ON l.book_id = b.id WHERE l.id IS NULL"),
+  C("Show each **class** and **how many loans** its students made.", "SELECT s.class, COUNT(*) FROM loans l JOIN students s ON l.student_id = s.id GROUP BY s.class"),
+  C("Bonus wizard task: for returned books, show the **title** and **how many days** it was kept. Use `julianday(returned) - julianday(borrowed)`.", "SELECT b.title, julianday(l.returned) - julianday(l.borrowed) AS days FROM loans l JOIN books b ON l.book_id = b.id WHERE l.returned IS NOT NULL"),
+  T("Case closed, detective! The librarian can now send reminders and buy more fantasy books. 🧙"),
+ ]},
+ {id:'p3', title:'The Great Cookie Mystery', db:'mystery', color:'pink', art:'cookie', blurb:"Someone stole the cookie jar from the school kitchen! Use clues to catch the thief.", steps:[
+  T("🚨 EMERGENCY! The cookie jar has vanished from the school kitchen! Only a SQL detective can solve this. We have **people**, **clues**, **sightings** and **alibis**."),
+  C("First, read all the **clues**. Show everything from the clues table.", "SELECT * FROM clues"),
+  C("Clue 1 says: kitchen, between 14:50 and 15:10. Show the **names** of people seen in the **kitchen** between **'14:50'** and **'15:10'**.", "SELECT p.name FROM sightings s JOIN people p ON s.person_id = p.id WHERE s.place = 'kitchen' AND s.time BETWEEN '14:50' AND '15:10'"),
+  C("Clue 2: shoe size 5! From those kitchen people, keep only **shoe_size = 5**. Show their **names**.", "SELECT p.name FROM sightings s JOIN people p ON s.person_id = p.id WHERE s.place = 'kitchen' AND s.time BETWEEN '14:50' AND '15:10' AND p.shoe_size = 5"),
+  C("Let's check alibis. Show each person's **name**, **alibi** and **verified** (only people who have an alibi).", "SELECT p.name, a.alibi, a.verified FROM alibis a JOIN people p ON a.person_id = p.id"),
+  C("FINAL QUERY! Find the person who was in the kitchen between 14:50 and 15:10, has shoe size 5, is in class **5B**, and has **no verified alibi**. Show their **name**.", "SELECT p.name FROM sightings s JOIN people p ON s.person_id = p.id WHERE s.place = 'kitchen' AND s.time BETWEEN '14:50' AND '15:10' AND p.shoe_size = 5 AND p.class = '5B' AND p.id NOT IN (SELECT person_id FROM alibis WHERE verified = 1)"),
+  T("🍪 IT WAS CHIKOO! He said he was napping, but nobody could prove it. The cookies were found under his desk. Case solved, Detective!"),
+ ]},
+ {id:'p4', title:'Sports Day Scoreboard', db:'sports', color:'mint', art:'trophy', blurb:"Build the live scoreboard for Sports Day. Which house will win the trophy?", steps:[
+  T("It's Sports Day! 🏃 Four houses battle for the trophy. We have **students**, **events** and **results** (who came 1st, 2nd and 3rd)."),
+  C("Show the **winners**: each **event** and the **name** of who came 1st.", "SELECT e.event, s.name FROM results r JOIN students s ON r.student_id = s.id JOIN events e ON r.event_id = e.id WHERE r.position = 1"),
+  C("Points time! 1st = **10**, 2nd = **5**, 3rd = **2**. Show **name**, **event** and **points** for every result using CASE.", "SELECT s.name, e.event, CASE r.position WHEN 1 THEN 10 WHEN 2 THEN 5 ELSE 2 END AS points FROM results r JOIN students s ON r.student_id = s.id JOIN events e ON r.event_id = e.id"),
+  C("Show each student's **name** and **total points**, highest first. If points tie, sort by name A to Z.", "SELECT s.name, SUM(CASE r.position WHEN 1 THEN 10 WHEN 2 THEN 5 ELSE 2 END) AS total FROM results r JOIN students s ON r.student_id = s.id GROUP BY s.id, s.name ORDER BY total DESC, s.name"),
+  C("The trophy! Show each **house** and its **total points**, highest first.", "SELECT s.house, SUM(CASE r.position WHEN 1 THEN 10 WHEN 2 THEN 5 ELSE 2 END) AS total FROM results r JOIN students s ON r.student_id = s.id GROUP BY s.house ORDER BY total DESC"),
+  C("Star of each house: show **house**, **name** and **points** of the top scorer in each house (ties are fine, use RANK).", "WITH pts AS (SELECT s.house, s.name, SUM(CASE r.position WHEN 1 THEN 10 WHEN 2 THEN 5 ELSE 2 END) AS points FROM results r JOIN students s ON r.student_id = s.id GROUP BY s.id) SELECT house, name, points FROM (SELECT *, RANK() OVER (PARTITION BY house ORDER BY points DESC) AS rk FROM pts) WHERE rk = 1"),
+  T("🏆 Blue House wins! You just built a real scoreboard, the same way sports apps work."),
+ ]},
+];
+
+/* Build the path */
+const PATH = [];
+WORLDS.forEach(w => {
+  w.lessons.forEach(l => PATH.push({...l, type:'lesson', world:w.id, db:'pets'}));
+  const b = BOSSES.find(b => b.after === w.id);
+  if (b) PATH.push({...b, type:'boss', world:w.id, title:b.name, db:'pets'});
+});
+const NODE = Object.fromEntries([...PATH, ...PROJECTS.map(p => ({...p, type:'project'}))].map(n => [n.id, n]));
+
+/* =====================================================================
+   STATE + SAVING
+   ===================================================================== */
+const KEY = 'byte-sql-quest-v1';
+const today = () => dkey(new Date());
+function dkey(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function defaults(){ return {name:'', xp:0, coins:0, days:{}, time:{}, done:{}, badges:{}, owned:['sky'], wear:{hat:'', color:'sky'},
+  arena:{}, projects:{}, journal:[], stats:{oops:0, runs:0}, settings:{sound:true, goal:30, unlockAll:false}, goalMet:{}, bestStreak:0, updatedAt:0}; }
+function merged(src){ const d = defaults(); const s = src || {};
+  return {...d, ...s, settings:{...d.settings, ...(s.settings||{})}, stats:{...d.stats, ...(s.stats||{})}, wear:{...d.wear, ...(s.wear||{})}}; }
+let S = defaults();
+try { const raw = localStorage.getItem(KEY); if (raw) S = merged(JSON.parse(raw)); } catch(e) {}
+
+let cloudRef = null, saveTimer = null, saving = Promise.resolve(), syncLabel = 'Saved on this device';
+function save(){
+  S.updatedAt = Date.now();
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
+  if (!cloudRef) return;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    const body = JSON.parse(JSON.stringify(S));
+    saving = saving.then(() => cloudRef.set(body)).then(() => setSync('Saved to your account')).catch(() => setSync('Saved on this device'));
+  }, 1500);
+}
+function setSync(t){ syncLabel = t; const el = document.getElementById('syncLbl'); if (el) el.textContent = t; }
+async function initCloud(){
+  try {
+    if (!window.claude || !window.claude.use) return;
+    const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+    if (!db || !user) return;
+    const uid = await user.id(); if (!uid) return;
+    const ref = db.doc('data/users/' + uid + '/progress');
+    const snap = await ref.get();
+    cloudRef = ref;
+    if (snap.exists) {
+      const d = snap.data();
+      if ((d.updatedAt||0) > (S.updatedAt||0)) { S = merged(JSON.parse(JSON.stringify(d))); try{localStorage.setItem(KEY, JSON.stringify(S));}catch(e){} refreshAll(); }
+      else if ((S.updatedAt||0) > (d.updatedAt||0)) save();
+    } else if (S.updatedAt) save();
+    setSync('Saved to your account');
+  } catch(e) { cloudRef = null; }
+}
+
+/* =====================================================================
+   SQL ENGINE
+   ===================================================================== */
+let SQL = null;
+const sqlReady = (typeof initSqlJs === 'function' ? initSqlJs({}) : Promise.reject('no sql')).then(s => (SQL = s)).catch(() => null);
+function freshDB(ds){ const db = new SQL.Database(); db.exec(DATASETS[ds] || DATASETS.pets); return db; }
+function runSQL(sql, ds, check){
+  if (!SQL) return {ok:false, err:'The SQL engine is still waking up. Try again in a second!'};
+  const db = freshDB(ds);
+  try {
+    let res = db.exec(sql);
+    if (check) res = db.exec(check);
+    const last = [...res].reverse().find(r => r.columns && r.columns.length) || null;
+    return {ok:true, res:last, changes:db.getRowsModified()};
+  } catch(e) { return {ok:false, err:String(e && e.message || e)}; }
+  finally { db.close(); }
+}
+const solCache = new Map();
+function solution(task, ds){
+  const k = ds + '|' + task.sol + '|' + (task.check||'');
+  if (!solCache.has(k)) solCache.set(k, runSQL(task.sol, ds, task.check));
+  return solCache.get(k);
+}
+function isOrdered(sql){ return /order\s+by/i.test(String(sql).replace(/over\s*\([^)]*\)/gi, '')); }
+function norm(v){ if (v === null || v === undefined) return 'NULL'; if (typeof v === 'number') return String(Math.round(v*1000)/1000); return String(v).trim(); }
+function compare(u, s, ordered){
+  if (!s) return {ok:!u || !u.values.length};
+  if (!u) return {ok:false, why:"Your spell didn't show any table. Did you forget SELECT?"};
+  if (u.columns.length !== s.columns.length)
+    return {ok:false, why:`Byte wanted **${s.columns.length}** column${s.columns.length>1?'s':''}, but you showed **${u.columns.length}**. Check the list after SELECT.`};
+  if (u.values.length !== s.values.length)
+    return {ok:false, why:`You got **${u.values.length}** row${u.values.length===1?'':'s'}, but Byte wanted **${s.values.length}**. Check your WHERE filter${s.values.length<u.values.length?' (too many rows got through)':''}.`};
+  // match columns by their values, so "age, name" also works for "name, age"
+  const sig = (res, c) => res.values.map(r => norm(r[c])).sort().join('␟');
+  const sSig = s.columns.map((_, c) => sig(s, c)), used = new Set(), map = [];
+  for (let c = 0; c < u.columns.length; c++) {
+    const us = sig(u, c); let found = -1;
+    for (let j = 0; j < sSig.length; j++) if (!used.has(j) && sSig[j] === us) { found = j; break; }
+    if (found < 0) return {ok:false, why:"Right number of rows, but some values are different. Look closely at the target table!"};
+    used.add(found); map[found] = c;
+  }
+  const row = (r, mp) => (mp ? mp.map(c => norm(r[c])) : r.map(norm)).join('␟');
+  const A = u.values.map(r => row(r, map)), Bv = s.values.map(r => row(r));
+  if (ordered) {
+    if (A.every((x, i) => x === Bv[i])) return {ok:true};
+    const as = [...A].sort(), bs = [...Bv].sort();
+    if (as.every((x, i) => x === bs[i])) return {ok:false, why:"Right rows, wrong order! Check your **ORDER BY** (ASC or DESC?)."};
+    return {ok:false, why:"Some rows are different from what Byte wanted."};
+  }
+  const as = [...A].sort(), bs = [...Bv].sort();
+  return as.every((x, i) => x === bs[i]) ? {ok:true} : {ok:false, why:"Right size, but some rows don't match. Check your filter!"};
+}
+function tablesOf(ds){
+  if (!SQL) return [];
+  const db = freshDB(ds);
+  try {
+    const t = db.exec("SELECT name FROM sqlite_master WHERE type='table' ORDER BY rowid");
+    return t.length ? t[0].values.map(([n]) => ({name:n, cols:db.exec(`PRAGMA table_info(${n})`)[0].values.map(r => r[1])})) : [];
+  } finally { db.close(); }
+}
+function friendly(err, ds){
+  const tbls = tablesOf(ds);
+  let m;
+  if ((m = err.match(/no such column: ([\w.]+)/i))) {
+    return `Byte can't find a column called **${m[1]}**. Check the spelling! Columns you can use: ${tbls.map(t => t.name + ' (' + t.cols.join(', ') + ')').join('; ')}.`;
+  }
+  if ((m = err.match(/no such table: (\w+)/i))) return `There's no table called **${m[1]}**. The tables here are: **${tbls.map(t=>t.name).join(', ')}**.`;
+  if ((m = err.match(/near "([^"]*)": syntax error/i))) return `Byte got confused near **${m[1]}**. Maybe a typo, a missing comma, or a missing quote ' around a word?`;
+  if (/incomplete input/i.test(err)) return "Your spell stopped too early. Is a quote ' or a bracket ( left open?";
+  if (/ambiguous column name: ([\w]+)/i.test(err)) return `Two tables both have **${err.match(/ambiguous column name: ([\w]+)/i)[1]}**. Say which one, like **p.name** or **o.name**.`;
+  if (/UNIQUE constraint/i.test(err)) return "That id is already taken! Every id must be unique. Pick a new number.";
+  if (/misuse of aggregate/i.test(err)) return "Calculator spells like COUNT or SUM can't go in WHERE. Use HAVING for groups!";
+  if (/table \w+ already exists/i.test(err)) return "That table already exists! Pick a new name.";
+  return "Byte saw an error: " + err;
+}
+
+/* =====================================================================
+   SMALL HELPERS
+   ===================================================================== */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function md(s){ return esc(s).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\*([^*]+)\*/g, '<i>$1</i>').replace(/\n/g, '<br>'); }
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const shuffle = a => { a = [...a]; for (let i = a.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const COLORVAR = {grape:'var(--grape)', sky:'var(--sky)', mint:'var(--mint)', sun:'var(--sun)', pink:'var(--pink)', orange:'var(--orange)'};
+const KW = new Set('SELECT FROM WHERE AND OR NOT ORDER BY ASC DESC LIMIT DISTINCT AS LIKE IN BETWEEN IS NULL COUNT SUM AVG MIN MAX GROUP HAVING JOIN LEFT INNER OUTER ON INSERT INTO VALUES UPDATE SET DELETE CREATE TABLE INTEGER TEXT REAL CASE WHEN THEN ELSE END WITH OVER PARTITION RANK DENSE_RANK ROW_NUMBER UNION ALL EXISTS ROUND DROP PRIMARY KEY JULIANDAY'.split(' '));
+function hl(src, idents){
+  let out = ''; const re = /('(?:[^']|'')*'?)|(\b\d+(?:\.\d+)?\b)|(--[^\n]*)|([A-Za-z_][A-Za-z0-9_]*)|([\s\S])/g; let m;
+  while ((m = re.exec(src))) {
+    if (m[1]) out += `<span class="t-str">${esc(m[1])}</span>`;
+    else if (m[2]) out += `<span class="t-num">${m[2]}</span>`;
+    else if (m[3]) out += `<span class="t-com">${esc(m[3])}</span>`;
+    else if (m[4]) out += KW.has(m[4].toUpperCase()) ? `<span class="t-kw">${m[4]}</span>` : (idents && idents.has(m[4].toLowerCase()) ? `<span class="t-id">${m[4]}</span>` : esc(m[4]));
+    else out += esc(m[5]);
+  }
+  return out;
+}
+function tableHTML(res, max=8, cap=''){
+  if (!res) return `<div class="msg info">No table to show. (That's normal for INSERT, UPDATE and DELETE.)</div>`;
+  const rows = res.values.slice(0, max);
+  return `${cap ? `<div class="tbl-cap"><span>${cap}</span><span class="muted">${res.values.length} row${res.values.length===1?'':'s'}</span></div>` : ''}
+  <div class="tbl-wrap"><table class="data"><thead><tr>${res.columns.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead>
+  <tbody>${rows.map((r, i) => `<tr style="animation-delay:${i*40}ms">${r.map(v => v === null ? '<td class="null">NULL</td>' : `<td>${esc(typeof v === 'number' ? Math.round(v*1000)/1000 : v)}</td>`).join('')}</tr>`).join('')}</tbody></table>
+  ${res.values.length > max ? `<div class="more">+ ${res.values.length - max} more rows</div>` : ''}</div>`;
+}
+function showTable(ds, name){ const r = runSQL('SELECT * FROM ' + name, ds); return r.ok ? tableHTML(r.res, 20, `<code>${esc(name)}</code> table`) : ''; }
+
+/* =====================================================================
+   ART: Byte, bosses, icons
+   ===================================================================== */
+const BYTE_COLORS = {sky:['#3FA9F5','#9AD3FF'], mint:['#20C996','#8EEBCB'], pink:['#FF5C8A','#FFB0C6'], sunny:['#FFC83A','#FFE7A0'], grape:['#8B6CFF','#C6B8FF'], orange:['#FF8A3D','#FFC59E'], lava:['#F2584A','#FFA9A0'], night:['#33407A','#7F8BC9']};
+const HATS = {
+  party:`<path d="M44 34 L60 0 L76 34 Z" fill="#FF5C8A" stroke="#1C2448" stroke-width="3" stroke-linejoin="round"/><circle cx="55" cy="22" r="3" fill="#FFC83A"/><circle cx="65" cy="14" r="3" fill="#3FA9F5"/><circle cx="62" cy="27" r="3" fill="#20C996"/><circle cx="60" cy="0" r="6" fill="#FFC83A" stroke="#1C2448" stroke-width="3"/>`,
+  crown:`<path d="M36 36 L38 10 L50 24 L60 4 L70 24 L82 10 L84 36 Z" fill="#FFC83A" stroke="#1C2448" stroke-width="3" stroke-linejoin="round"/><circle cx="60" cy="27" r="4" fill="#FF5C8A" stroke="#1C2448" stroke-width="2"/><circle cx="46" cy="30" r="3" fill="#3FA9F5"/><circle cx="74" cy="30" r="3" fill="#20C996"/>`,
+  wizard:`<ellipse cx="60" cy="34" rx="36" ry="7" fill="#6B4FE0" stroke="#1C2448" stroke-width="3"/><path d="M42 33 Q58 -14 78 -8 Q66 6 78 33 Z" fill="#8B6CFF" stroke="#1C2448" stroke-width="3" stroke-linejoin="round"/><path d="M58 14 l2 5 5 1 -4 3 1 5 -4 -3 -4 3 1 -5 -4 -3 5 -1 z" fill="#FFC83A"/>`,
+  cap:`<path d="M34 34 Q36 6 60 6 Q84 6 86 34 Z" fill="#3FA9F5" stroke="#1C2448" stroke-width="3"/><path d="M80 30 Q104 28 112 36 L80 36 Z" fill="#2B86D0" stroke="#1C2448" stroke-width="3" stroke-linejoin="round"/><circle cx="60" cy="7" r="4" fill="#FFC83A" stroke="#1C2448" stroke-width="2"/>`,
+  pirate:`<path d="M26 34 Q60 -16 94 34 Q60 22 26 34 Z" fill="#2A2F45" stroke="#1C2448" stroke-width="3"/><circle cx="60" cy="18" r="6" fill="#fff"/><path d="M54 26 l12 -6 M54 20 l12 6" stroke="#fff" stroke-width="2.5"/>`,
+  phones:`<path d="M18 74 Q18 18 60 18 Q102 18 102 74" fill="none" stroke="#1C2448" stroke-width="7" stroke-linecap="round"/><path d="M18 74 Q18 18 60 18 Q102 18 102 74" fill="none" stroke="#FF5C8A" stroke-width="3" stroke-linecap="round"/><rect x="8" y="62" width="16" height="26" rx="7" fill="#FF5C8A" stroke="#1C2448" stroke-width="3"/><rect x="96" y="62" width="16" height="26" rx="7" fill="#FF5C8A" stroke="#1C2448" stroke-width="3"/>`,
+  flower:`<g transform="translate(78 24)"><circle cx="0" cy="-9" r="7" fill="#FF5C8A" stroke="#1C2448" stroke-width="2.5"/><circle cx="9" cy="0" r="7" fill="#FF5C8A" stroke="#1C2448" stroke-width="2.5"/><circle cx="0" cy="9" r="7" fill="#FF5C8A" stroke="#1C2448" stroke-width="2.5"/><circle cx="-9" cy="0" r="7" fill="#FF5C8A" stroke="#1C2448" stroke-width="2.5"/><circle r="6" fill="#FFC83A" stroke="#1C2448" stroke-width="2.5"/></g>`,
+  chef:`<rect x="42" y="22" width="36" height="14" fill="#fff" stroke="#1C2448" stroke-width="3"/><path d="M42 24 Q30 8 44 4 Q52 -8 62 2 Q74 -8 80 6 Q92 10 78 24 Z" fill="#fff" stroke="#1C2448" stroke-width="3" stroke-linejoin="round"/>`,
+};
+function byteSVG({mood='idle', size=120, hat, color}={}){
+  hat = hat === undefined ? S.wear.hat : hat; color = color || S.wear.color;
+  const [c, c2] = BYTE_COLORS[color] || BYTE_COLORS.sky;
+  const mouths = {
+    idle:`<path d="M50 90 Q60 99 70 90" fill="none" stroke="#1C2448" stroke-width="4" stroke-linecap="round"/>`,
+    happy:`<path d="M46 87 Q60 108 74 87 Z" fill="#1C2448" stroke="#1C2448" stroke-width="3" stroke-linejoin="round"/><path d="M53 96 Q60 102 67 96 Q60 92 53 96Z" fill="#FF7BA3"/>`,
+    dance:`<path d="M46 87 Q60 108 74 87 Z" fill="#1C2448" stroke="#1C2448" stroke-width="3" stroke-linejoin="round"/><path d="M53 96 Q60 102 67 96 Q60 92 53 96Z" fill="#FF7BA3"/>`,
+    sad:`<path d="M50 97 Q60 88 70 97" fill="none" stroke="#1C2448" stroke-width="4" stroke-linecap="round"/>`,
+    think:`<path d="M52 93 L68 91" fill="none" stroke="#1C2448" stroke-width="4" stroke-linecap="round"/>`,
+    wow:`<ellipse cx="60" cy="93" rx="6" ry="7" fill="#1C2448"/>`,
+  };
+  return `<svg class="byte mood-${mood}" viewBox="-6 -14 132 166" width="${size}" height="${Math.round(size*166/132)}" aria-hidden="true">
+  <g class="body">
+    <ellipse cx="44" cy="142" rx="12" ry="6" fill="#1C2448"/><ellipse cx="76" cy="142" rx="12" ry="6" fill="#1C2448"/>
+    <g class="arm-l"><path d="M22 84 Q6 92 8 108" fill="none" stroke="#1C2448" stroke-width="7" stroke-linecap="round"/><circle cx="8" cy="108" r="6" fill="${c}" stroke="#1C2448" stroke-width="3"/></g>
+    <g class="arm-r"><path d="M98 84 Q114 92 112 108" fill="none" stroke="#1C2448" stroke-width="7" stroke-linecap="round"/><circle cx="112" cy="108" r="6" fill="${c}" stroke="#1C2448" stroke-width="3"/></g>
+    <path d="M20 42 V124 A40 13 0 0 0 100 124 V42" fill="${c}" stroke="#1C2448" stroke-width="4"/>
+    <path d="M20 104 A40 13 0 0 0 100 104" fill="none" stroke="#1C2448" stroke-width="3" opacity=".35"/>
+    <ellipse cx="60" cy="42" rx="40" ry="13" fill="${c2}" stroke="#1C2448" stroke-width="4"/>
+    <path d="M30 60 Q32 52 40 50" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".7"/>
+    <g class="eyes"><ellipse cx="46" cy="72" rx="9" ry="10" fill="#fff" stroke="#1C2448" stroke-width="3"/><ellipse cx="74" cy="72" rx="9" ry="10" fill="#fff" stroke="#1C2448" stroke-width="3"/>
+      <circle class="pupil" cx="47" cy="74" r="4.5" fill="#1C2448"/><circle class="pupil" cx="75" cy="74" r="4.5" fill="#1C2448"/><circle cx="49" cy="71" r="1.6" fill="#fff"/><circle cx="77" cy="71" r="1.6" fill="#fff"/></g>
+    <ellipse cx="34" cy="88" rx="6" ry="3.5" fill="#FF7BA3" opacity=".75"/><ellipse cx="86" cy="88" rx="6" ry="3.5" fill="#FF7BA3" opacity=".75"/>
+    ${mouths[mood] || mouths.idle}
+    <g class="hat">${HATS[hat] || ''}</g>
+  </g></svg>`;
+}
+function bossSVG(b, size=110){
+  const c = b.color;
+  const acc = b.acc === 'crown' ? `<path d="M38 22 L40 2 L50 14 L60 -2 L70 14 L80 2 L82 22 Z" fill="#FFC83A" stroke="#1C2448" stroke-width="3" stroke-linejoin="round"/>`
+    : b.acc === 'horns' ? `<path d="M34 30 Q20 6 30 -2 Q34 16 46 22Z M86 30 Q100 6 90 -2 Q86 16 74 22Z" fill="#fff" stroke="#1C2448" stroke-width="3"/>`
+    : `<path d="M22 60 Q10 110 30 120 L90 120 Q110 110 98 60 Z" fill="#2A2F45" stroke="#1C2448" stroke-width="3"/><path d="M36 34 L60 46 L84 34" fill="none" stroke="#fff" stroke-width="3"/>`;
+  return `<svg class="boss-svg" viewBox="0 -8 120 140" width="${size}" height="${size}" aria-hidden="true"><g class="bb">
+    ${b.acc === 'cape' ? acc : ''}
+    <path d="M44 26 Q36 6 26 4" fill="none" stroke="#1C2448" stroke-width="4" stroke-linecap="round"/><circle cx="26" cy="4" r="5" fill="${c}" stroke="#1C2448" stroke-width="3"/>
+    <path d="M76 26 Q84 6 94 4" fill="none" stroke="#1C2448" stroke-width="4" stroke-linecap="round"/><circle cx="94" cy="4" r="5" fill="${c}" stroke="#1C2448" stroke-width="3"/>
+    <path d="M24 100 L12 118 M40 108 L34 126 M80 108 L86 126 M96 100 L108 118" stroke="#1C2448" stroke-width="5" stroke-linecap="round"/>
+    <ellipse cx="60" cy="72" rx="44" ry="46" fill="${c}" stroke="#1C2448" stroke-width="4"/>
+    <ellipse cx="60" cy="86" rx="26" ry="20" fill="#fff" opacity=".25"/>
+    <path d="M34 54 L52 62 M86 54 L68 62" stroke="#1C2448" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="46" cy="68" r="8" fill="#fff" stroke="#1C2448" stroke-width="3"/><circle cx="74" cy="68" r="8" fill="#fff" stroke="#1C2448" stroke-width="3"/>
+    <circle cx="48" cy="70" r="4" fill="#1C2448"/><circle cx="72" cy="70" r="4" fill="#1C2448"/>
+    <path d="M40 88 Q60 108 80 88 Z" fill="#1C2448"/><path d="M46 89 L50 96 L54 90 M66 90 L70 96 L74 89" fill="#fff"/>
+    ${b.acc !== 'cape' ? acc : ''}
+  </g></svg>`;
+}
+const ICON = {
+  flame:(s=22)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><path class="flame-anim" d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-4 1-6 1-9z" fill="#FF8A3D" stroke="#1C2448" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 13c1 1.5 3 2.5 3 4.5a3 3 0 0 1-6 0c0-1.5 1-2.5 3-4.5z" fill="#FFC83A"/></svg>`,
+  coin:(s=22)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#FFC83A" stroke="#1C2448" stroke-width="2"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#E0A20F" stroke-width="2"/><path d="M10 9.5h3.2a1.5 1.5 0 0 1 0 3H10v-3zm0 3h3.6a1.5 1.5 0 0 1 0 3H10v-3z" fill="none" stroke="#1C2448" stroke-width="1.5"/></svg>`,
+  star:(s=22, on=true)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 16.9 6.1 20.1l1.3-6.6L2.5 8.9l6.6-.8z" fill="${on?'#FFC83A':'#C9D3E6'}" stroke="#1C2448" stroke-width="1.8" stroke-linejoin="round"/></svg>`,
+  heart:(s=26)=>`<svg class="heart" width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-8-5.3-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.7-8 11-8 11z" fill="#F2584A" stroke="#1C2448" stroke-width="1.8"/></svg>`,
+  lock:(s=26)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.4"/></svg>`,
+  check:(s=30)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#1C2448" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  skull:(s=40)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="13" rx="8" ry="8" fill="#7CD45A" stroke="#1C2448" stroke-width="1.8"/><path d="M8 5 6 1M16 5l2-4" stroke="#1C2448" stroke-width="1.8" stroke-linecap="round"/><circle cx="9" cy="12" r="2" fill="#fff" stroke="#1C2448"/><circle cx="15" cy="12" r="2" fill="#fff" stroke="#1C2448"/><path d="M8.5 16.5q3.5 3 7 0" fill="none" stroke="#1C2448" stroke-width="1.6"/></svg>`,
+  map:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M9 4v14M15 6v14" stroke="currentColor" stroke-width="2"/></svg>`,
+  sword:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6L10 20l-3-3zM5 15l4 4M3 21l3-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  rocket:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c4 3 5 8 3 13H9C7 10 8 5 12 2zM9 15l-3 3 1 3 3-2M15 15l3 3-1 3-3-2" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/><circle cx="12" cy="9" r="2" fill="currentColor"/></svg>`,
+  sand:`<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M7 9l3 3-3 3M12 15h5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`,
+  cal:`<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="12" cy="15" r="2" fill="currentColor"/></svg>`,
+  shirt:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3l-5 3 2 5 2-1v11h10V10l2 1 2-5-5-3c0 2-2 3-4 3S8 5 8 3z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/></svg>`,
+  gear:`<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`,
+};
+function medal(color, glyph){ return `<svg class="medal" viewBox="0 0 64 64" aria-hidden="true"><path d="M20 2h10l4 18H24zM34 2h10l-4 18H30z" fill="#3FA9F5" stroke="#1C2448" stroke-width="2.5" stroke-linejoin="round"/><circle cx="32" cy="40" r="20" fill="${color}" stroke="#1C2448" stroke-width="3"/><circle cx="32" cy="40" r="14" fill="none" stroke="#fff" stroke-width="2" opacity=".6"/><text x="32" y="47" text-anchor="middle" font-size="20">${glyph}</text></svg>`; }
+
+/* =====================================================================
+   XP, LEVELS, STREAK, BADGES, SHOP
+   ===================================================================== */
+const LEVELS = ['Data Egg','Row Rookie','Column Cadet','Query Kid','Filter Ninja','Sorting Star','Group Guru','Join Wizard','SQL Superhero','Database Dragon','Data Legend'];
+const lvlXP = n => 50 * n * (n + 1) / 2;
+function levelOf(xp){ let n = 0; while (xp >= lvlXP(n + 1)) n++; return n; }
+function streak(){
+  let d = new Date(), n = 0;
+  if (!(S.days[dkey(d)] > 0)) d.setDate(d.getDate() - 1);
+  while (S.days[dkey(d)] > 0) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+const BADGES = [
+  {id:'first', name:'First Spell', desc:'Ran your first SQL query', color:'#3FA9F5', g:'🪄', test:()=>S.stats.runs>0},
+  {id:'brain', name:'Super Learner', desc:'Finished Brain Camp', color:'#8B6CFF', g:'🧠', test:()=>!!S.done.w0b},
+  {id:'goal', name:'Goal Getter', desc:'Hit your daily goal', color:'#20C996', g:'🎯', test:()=>Object.keys(S.goalMet).length>0},
+  {id:'s3', name:'Warm Flame', desc:'3 days in a row', color:'#FF8A3D', g:'🔥', test:()=>S.bestStreak>=3},
+  {id:'s7', name:'Fire Week', desc:'7 days in a row', color:'#F2584A', g:'🔥', test:()=>S.bestStreak>=7},
+  {id:'s30', name:'Blazing Legend', desc:'30 days in a row', color:'#FF5C8A', g:'☄️', test:()=>S.bestStreak>=30},
+  {id:'oops', name:'Brave Oops-er', desc:'Made 10 mistakes and kept going', color:'#FFC83A', g:'💪', test:()=>S.stats.oops>=10},
+  {id:'star3', name:'No-Peek Pro', desc:'Got 3 stars on a lesson', color:'#FFC83A', g:'⭐', test:()=>Object.values(S.done).some(d=>d.stars===3)},
+  {id:'boss1', name:'Bug Squasher', desc:'Beat the Bug King', color:'#7CD45A', g:'🐛', test:()=>!!S.done.boss1},
+  {id:'boss2', name:'Monster Tamer', desc:'Beat the Mix-Up Monster', color:'#FF8A3D', g:'👹', test:()=>!!S.done.boss2},
+  {id:'boss3', name:'Count Crusher', desc:'Beat Count Countula', color:'#8B6CFF', g:'🧛', test:()=>!!S.done.boss3},
+  {id:'boss4', name:'SQL Graduate', desc:'Beat the Mega Bug', color:'#FF5C8A', g:'🎓', test:()=>!!S.done.boss4},
+  {id:'lv5', name:'Level 5', desc:'Reached level 5', color:'#3FA9F5', g:'🚀', test:()=>levelOf(S.xp)>=5},
+  {id:'arena5', name:'Arena Fighter', desc:'Solved 5 arena problems', color:'#F2584A', g:'⚔️', test:()=>Object.keys(S.arena).length>=5},
+  {id:'arenaAll', name:'Arena Champion', desc:'Solved every arena problem', color:'#FFC83A', g:'🏆', test:()=>ARENA.every(a=>S.arena[a.id])},
+  {id:'detective', name:'Cookie Detective', desc:'Solved the Cookie Mystery', color:'#FF5C8A', g:'🍪', test:()=>!!S.done.p3},
+  {id:'builder', name:'Real-World Builder', desc:'Finished all 4 projects', color:'#20C996', g:'🏗️', test:()=>PROJECTS.every(p=>S.done[p.id])},
+  {id:'style', name:'Fashion Byte', desc:'Bought something in the closet', color:'#8B6CFF', g:'🎩', test:()=>S.owned.length>1},
+];
+const SHOP = [
+  {id:'party', kind:'hat', name:'Party hat', price:20}, {id:'flower', kind:'hat', name:'Flower', price:25}, {id:'cap', kind:'hat', name:'Cool cap', price:30},
+  {id:'phones', kind:'hat', name:'Headphones', price:40}, {id:'chef', kind:'hat', name:'Chef hat', price:45}, {id:'pirate', kind:'hat', name:'Pirate hat', price:50},
+  {id:'wizard', kind:'hat', name:'Wizard hat', price:60}, {id:'crown', kind:'hat', name:'Royal crown', price:90},
+  {id:'sky', kind:'color', name:'Sky blue', price:0}, {id:'mint', kind:'color', name:'Mint', price:15}, {id:'pink', kind:'color', name:'Bubblegum', price:15},
+  {id:'sunny', kind:'color', name:'Sunny', price:15}, {id:'orange', kind:'color', name:'Mango', price:15}, {id:'grape', kind:'color', name:'Grape', price:20},
+  {id:'lava', kind:'color', name:'Lava', price:25}, {id:'night', kind:'color', name:'Midnight', price:30},
+];
+
+function gainXP(n, fromEl){
+  if (!n) return;
+  const t = today(), before = S.days[t] || 0, lv0 = levelOf(S.xp);
+  S.xp += n; S.days[t] = before + n;
+  floater('+' + n + ' XP', fromEl);
+  const g = S.settings.goal;
+  if (before < g && S.days[t] >= g && !S.goalMet[t]) {
+    S.goalMet[t] = true; addCoins(15, null, true);
+    setTimeout(() => { sfx.win(); confetti(); toast(ICON.star(26) + ` Daily goal reached! +15 coins`); }, 600);
+  }
+  S.bestStreak = Math.max(S.bestStreak, streak());
+  const lv1 = levelOf(S.xp);
+  if (lv1 > lv0) setTimeout(() => levelUp(lv1), 900);
+  save(); renderStats(); checkBadges();
+}
+function addCoins(n, fromEl, quiet){
+  S.coins += n; save();
+  if (fromEl) coinFly(fromEl);
+  setTimeout(() => { renderStats(); const p = $('#pillCoins'); if (p) { p.classList.remove('bump'); void p.offsetWidth; p.classList.add('bump'); } if (!quiet) sfx.coin(); }, fromEl ? 800 : 0);
+}
+function checkBadges(){
+  BADGES.forEach(b => {
+    if (!S.badges[b.id] && b.test()) {
+      S.badges[b.id] = today(); save();
+      setTimeout(() => { sfx.win(); toast(`<span style="width:40px;display:inline-block">${medal(b.color, b.g)}</span> New badge: <b>${esc(b.name)}</b>`); }, 1200);
+    }
+  });
+}
+function levelUp(lv){
+  sfx.win(); confetti();
+  modal(`<div style="text-align:center">${byteSVG({mood:'dance', size:140})}
+    <div class="eyebrow" style="margin-top:8px">Level up!</div><h2 style="font-size:2.2rem">Level ${lv}: ${esc(LEVELS[Math.min(lv, LEVELS.length-1)])}</h2>
+    <p class="muted" style="font-weight:700">Your brain muscle is getting HUGE. Byte is so proud!</p>
+    <button class="btn go big" data-close>Keep going</button></div>`);
+}
+
+/* =====================================================================
+   FX: sound, confetti, floaters, toasts, modal
+   ===================================================================== */
+let AC = null;
+function tone(freqs, dur=0.09, type='square', vol=0.05){
+  if (!S.settings.sound) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = AC.currentTime;
+    freqs.forEach((f, i) => { const o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.value = f;
+      g.gain.setValueAtTime(vol, t0 + i*dur); g.gain.exponentialRampToValueAtTime(0.0001, t0 + i*dur + dur*1.8);
+      o.connect(g).connect(AC.destination); o.start(t0 + i*dur); o.stop(t0 + i*dur + dur*1.9); });
+  } catch(e) {}
+}
+const sfx = {
+  good:()=>tone([523,659,784,1046], .07, 'triangle', .09),
+  bad:()=>tone([330,220], .13, 'sawtooth', .035),
+  click:()=>tone([700], .03, 'square', .02),
+  coin:()=>tone([988,1319], .06, 'square', .035),
+  hit:()=>tone([180,90], .08, 'square', .06),
+  win:()=>tone([523,659,784,1046,784,1046,1318], .09, 'triangle', .09),
+};
+const fx = $('#fx'), ctx = fx.getContext('2d'); let parts = [], fxOn = false;
+function sizeFx(){ fx.width = innerWidth * devicePixelRatio; fx.height = innerHeight * devicePixelRatio; }
+addEventListener('resize', sizeFx); sizeFx();
+function confetti(x = innerWidth/2, y = innerHeight/3, n = 120){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) n = 24;
+  const cols = ['#FF5C8A','#FFC83A','#20C996','#3FA9F5','#8B6CFF','#FF8A3D'];
+  for (let i = 0; i < n; i++) parts.push({x, y, vx:(Math.random()-.5)*16, vy:Math.random()*-15-3, r:Math.random()*7+4, c:pick(cols), a:Math.random()*6, va:(Math.random()-.5)*.4, life:150, shape:Math.random()<.5});
+  if (!fxOn) { fxOn = true; requestAnimationFrame(tick); }
+}
+function tick(){
+  const d = devicePixelRatio; ctx.clearRect(0, 0, fx.width, fx.height);
+  parts = parts.filter(p => p.life-- > 0 && p.y < innerHeight + 40);
+  parts.forEach(p => { p.vy += .42; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.a += p.va;
+    ctx.save(); ctx.translate(p.x*d, p.y*d); ctx.rotate(p.a); ctx.fillStyle = p.c; ctx.globalAlpha = Math.min(1, p.life/40);
+    if (p.shape) ctx.fillRect(-p.r*d/2, -p.r*d/4, p.r*d, p.r*d/2); else { ctx.beginPath(); ctx.arc(0, 0, p.r*d/2.4, 0, 7); ctx.fill(); }
+    ctx.restore(); });
+  if (parts.length) requestAnimationFrame(tick); else { fxOn = false; ctx.clearRect(0, 0, fx.width, fx.height); }
+}
+function centerOf(el){ if (!el) return {x:innerWidth/2, y:innerHeight/2}; const r = el.getBoundingClientRect(); return {x:r.left + r.width/2, y:r.top + r.height/2}; }
+function floater(text, el){
+  const {x, y} = centerOf(el); const f = document.createElement('div'); f.className = 'floater'; f.textContent = text;
+  f.style.left = (x - 40) + 'px'; f.style.top = (y - 30) + 'px'; document.body.appendChild(f); setTimeout(() => f.remove(), 1300);
+}
+function coinFly(el){
+  const a = centerOf(el), target = $('#pillCoins'), b = centerOf(target);
+  for (let i = 0; i < 5; i++) {
+    const c = document.createElement('div'); c.className = 'coinfly'; c.innerHTML = ICON.coin(26);
+    c.style.left = (a.x - 13 + (Math.random()-.5)*40) + 'px'; c.style.top = (a.y - 13) + 'px'; document.body.appendChild(c);
+    setTimeout(() => { c.style.transform = `translate(${b.x - a.x}px, ${b.y - a.y}px) scale(.6)`; }, 30 + i*70);
+    setTimeout(() => c.remove(), 950 + i*70);
+  }
+}
+function toast(html){
+  const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = html; $('#toasts').appendChild(t);
+  setTimeout(() => { t.style.transition = 'opacity .4s, transform .4s'; t.style.opacity = '0'; t.style.transform = 'translateY(-20px)'; }, 3200);
+  setTimeout(() => t.remove(), 3700);
+}
+function modal(html, wide){
+  const m = $('#modal'); m.innerHTML = `<div class="modal-box card ${wide?'wide':''}" role="dialog" aria-modal="true">${html}</div>`; m.hidden = false;
+  m.onclick = e => { if (e.target === m || e.target.closest('[data-close]')) closeModal(); };
+  const f = m.querySelector('input,textarea,button'); if (f) setTimeout(() => f.focus(), 50);
+  return m.firstElementChild;
+}
+function closeModal(){ const m = $('#modal'); m.hidden = true; m.innerHTML = ''; if (breakTimer) { clearInterval(breakTimer); breakTimer = null; } }
+addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) closeModal(); });
+
+/* =====================================================================
+   TOP BAR + NAV
+   ===================================================================== */
+const TABS = [
+  {id:'map', label:'Map', icon:ICON.map}, {id:'arena', label:'Arena', icon:ICON.sword}, {id:'projects', label:'Projects', icon:ICON.rocket},
+  {id:'play', label:'Playground', icon:ICON.sand}, {id:'tracker', label:'Tracker', icon:ICON.cal}, {id:'closet', label:'Closet', icon:ICON.shirt},
+];
+let route = 'map';
+function renderNav(){
+  $('#tabs').innerHTML = TABS.map(t => `<button class="tab" data-go="${t.id}" ${route===t.id?'aria-current="page"':''}>${t.icon}<span>${t.label}</span></button>`).join('');
+}
+function ring(pct, s=30){
+  const r = 11, c = 2*Math.PI*r;
+  return `<svg width="${s}" height="${s}" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="${r}" fill="none" stroke="var(--grid)" stroke-width="5"/>
+  <circle cx="15" cy="15" r="${r}" fill="none" stroke="var(--mint)" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-Math.min(1,pct))}" transform="rotate(-90 15 15)" style="transition:stroke-dashoffset .6s"/></svg>`;
+}
+function renderStats(){
+  const lv = levelOf(S.xp), a = lvlXP(lv), b = lvlXP(lv+1), td = S.days[today()] || 0;
+  $('#stats').innerHTML = `
+   <span class="pill" title="Days in a row">${ICON.flame()}<span>${streak()}</span></span>
+   <span class="pill" title="Level ${lv}: ${esc(LEVELS[Math.min(lv, LEVELS.length-1)])}">${ICON.star(22)}<span>Lv ${lv}</span><span class="lvl-bar"><i style="width:${Math.round((S.xp-a)/(b-a)*100)}%"></i></span></span>
+   <span class="pill" id="pillCoins" title="Coins">${ICON.coin()}<span>${S.coins}</span></span>
+   <button class="pill" data-go="tracker" title="Today: ${td} of ${S.settings.goal} XP" style="cursor:pointer">${ring(td/S.settings.goal, 24)}<span>${td}/${S.settings.goal}</span></button>
+   <button class="pill btn-break" id="breakBtn" style="cursor:pointer">Brain break</button>
+   <button class="pill" id="setBtn" aria-label="Settings" style="cursor:pointer;padding:4px 8px">${ICON.gear}</button>`;
+  $('#brandByte').innerHTML = byteSVG({size:46});
+  $('#hello').textContent = S.name ? `Hi, ${S.name}!` : 'Ready, explorer?';
+}
+
+/* =====================================================================
+   VIEWS
+   ===================================================================== */
+const view = $('#view');
+function go(r, arg){
+  route = r; P = null; renderNav();
+  view.className = 'wrap view-in'; void view.offsetWidth;
+  ({map:renderMap, arena:renderArena, projects:renderProjects, play:renderPlay, tracker:renderTracker, closet:renderCloset})[r](arg);
+  scrollTo({top:0, behavior:'smooth'});
+}
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-go]'); if (g) { sfx.click(); closeModal(); go(g.dataset.go); return; }
+  if (e.target.closest('#brand')) { go('map'); return; }
+  if (e.target.closest('#breakBtn')) { brainBreak(); return; }
+  if (e.target.closest('#setBtn')) { settings(); return; }
+});
+
+/* ---------- MAP ---------- */
+const unlocked = i => S.settings.unlockAll || i === 0 || !!S.done[PATH[i-1].id];
+function currentIdx(){ const i = PATH.findIndex(n => !S.done[n.id]); return i < 0 ? PATH.length : i; }
+function renderMap(){
+  const cur = currentIdx(), doneAll = cur >= PATH.length;
+  const nextNode = PATH[cur];
+  const greet = !S.name ? "Welcome! Start at Brain Camp. I'll teach you how to learn first." :
+    doneAll ? "You beat the whole course! Real-world projects are waiting for you." :
+    (S.days[today()] ? pick(["Back for more? Your brain says thanks!","Let's keep that flame burning!","One more lesson? You've got this."]) : pick(["New day, new spells! Ready?","Your flame is waiting for today's lesson.","Hi again! Let's do a tiny lesson."]));
+  let idx = 0;
+  const worldsHTML = WORLDS.map((w, wi) => {
+    const nodes = PATH.filter(n => n.world === w.id);
+    const doneN = nodes.filter(n => S.done[n.id]).length;
+    const rows = nodes.map(n => {
+      const i = PATH.indexOf(n), pos = [50, 72, 50, 28][idx++ % 4], lock = !unlocked(i), d = S.done[n.id];
+      const isCur = i === cur, boss = n.type === 'boss';
+      return `<div class="node-row"><button class="node ${lock?'locked':''} ${isCur?'current':''} ${boss?'boss':''}" style="left:${pos}%" data-node="${n.id}" aria-label="${esc(n.title)}${lock?' (locked)':''}">
+        ${d && !boss ? `<span class="stars">${[1,2,3].map(k => ICON.star(18, k <= d.stars)).join('')}</span>` : ''}
+        <span class="node-dot" style="background:${boss ? n.color : COLORVAR[w.color]}">${lock ? ICON.lock() : boss ? (d ? ICON.check(34) : bossSVG(n, 72)) : d ? ICON.check() : (w.lessons.findIndex(l => l.id === n.id) + 1)}</span>
+        <span class="node-label">${esc(n.title)}</span>
+        ${isCur ? `<span class="node-byte" style="${pos > 50 ? 'left:-44px' : 'right:-44px'}">${byteSVG({size:62, mood:'happy'})}</span>` : ''}
+      </button></div>`;
+    }).join('');
+    return `<section class="world"><div class="world-banner card"><span class="world-badge" style="background:${COLORVAR[w.color]}">${wi}</span>
+      <div style="min-width:0"><div class="eyebrow">World ${wi}</div><h2>${esc(w.name)}</h2><div class="muted" style="font-weight:700;font-size:.92rem">${esc(w.sub)}</div></div>
+      <span class="world-prog">${doneN}/${nodes.length}</span></div><div class="nodes">${rows}</div></section>`;
+  }).join('');
+  view.innerHTML = `
+   <div class="home-hero card">${byteSVG({size:120, mood: doneAll ? 'dance' : 'happy'})}
+     <div><h1>${S.name ? 'Hi ' + esc(S.name) + '!' : "I'm Byte!"} ${esc(greet)}</h1>
+       <p>${doneAll ? 'Try the Arena puzzles or the real-life projects.' : `Next up: <b>${esc(nextNode.title)}</b>. It takes about 5 minutes.`}</p>
+       <div class="row">${doneAll ? `<button class="btn hot big" data-go="projects">Open projects</button>` : `<button class="btn go big" data-node="${nextNode.id}">${S.done[PATH[0].id] ? 'Continue quest' : 'Start the quest'}</button>`}
+       <span class="sync" id="syncLbl">${esc(syncLabel)}</span></div></div></div>
+   <div class="map" id="map"><svg class="map-path" id="mapPath"></svg>${worldsHTML}
+     <div class="world-banner card" style="justify-content:center;text-align:center"><div><div class="eyebrow">After the final boss</div><h2>Real-Life Projects</h2>
+     <div class="muted" style="font-weight:700">Pizza shop, library, cookie mystery, sports day</div><div style="margin-top:10px"><button class="btn sun" data-go="projects">See projects</button></div></div></div>
+   </div>`;
+  $$('.node', view).forEach(b => b.addEventListener('click', () => openNode(b.dataset.node)));
+  $$('[data-node]', $('.home-hero')).forEach(b => b.addEventListener('click', () => openNode(b.dataset.node)));
+  requestAnimationFrame(drawPath);
+  if (!S.name) setTimeout(onboarding, 300);
+}
+function drawPath(){
+  const map = $('#map'), svg = $('#mapPath'); if (!map || !svg) return;
+  const mr = map.getBoundingClientRect();
+  const pts = $$('.node-dot', map).map(d => { const r = d.getBoundingClientRect(); return [r.left - mr.left + r.width/2, r.top - mr.top + r.height/2]; });
+  svg.setAttribute('viewBox', `0 0 ${mr.width} ${mr.height}`); svg.setAttribute('width', mr.width); svg.setAttribute('height', mr.height);
+  let dPath = '';
+  pts.forEach((p, i) => { if (!i) { dPath += `M${p[0]} ${p[1]}`; return; } const q = pts[i-1], my = (q[1] + p[1]) / 2; dPath += ` C${q[0]} ${my} ${p[0]} ${my} ${p[0]} ${p[1]}`; });
+  svg.innerHTML = `<path d="${dPath}" fill="none" stroke="var(--line)" stroke-width="10" stroke-linecap="round" opacity=".18"/><path d="${dPath}" fill="none" stroke="var(--ink-soft)" stroke-width="4" stroke-dasharray="2 14" stroke-linecap="round"/>`;
+}
+addEventListener('resize', () => { if (route === 'map' && !P) drawPath(); });
+function openNode(id){
+  const n = NODE[id], i = PATH.indexOf(n);
+  if (n.type !== 'project' && i >= 0 && !unlocked(i)) { sfx.bad(); toast(ICON.lock(20) + ' Finish the one before it first!'); return; }
+  sfx.click();
+  if (n.type === 'boss') bossIntro(n); else startNode(n);
+}
+
+/* ---------- ONBOARDING, SETTINGS, BREAK ---------- */
+function onboarding(){
+  if (!$('#modal').hidden) return;
+  const box = modal(`<div style="text-align:center">${byteSVG({size:130, mood:'happy'})}
+    <h2 style="font-size:1.9rem;margin-top:6px">Hi! I'm Byte.</h2>
+    <p style="font-weight:700" class="muted">I'm a tiny database. I'll teach you SQL, the secret language computers use to answer questions about data. What's your name, explorer?</p>
+    <form id="nameForm" class="row" style="justify-content:center"><input id="nameIn" class="field" maxlength="20" placeholder="Your name" style="max-width:240px" autocomplete="off">
+    <button class="btn go" type="submit">Let's go!</button></form></div>`);
+  $('#nameForm', box).addEventListener('submit', e => { e.preventDefault(); const v = $('#nameIn').value.trim(); S.name = v || 'Explorer'; save(); closeModal(); sfx.win(); confetti(); renderStats(); renderMap(); });
+}
+function settings(){
+  const box = modal(`<h2>Settings</h2>
+   <div style="display:grid;gap:16px;margin-top:14px">
+    <label style="font-weight:800">Your name<input id="setName" class="field" value="${esc(S.name)}" maxlength="20"></label>
+    <div><div style="font-weight:800;margin-bottom:6px">Daily goal</div><div class="row">${[20,30,50,80].map(g => `<button class="btn small ${S.settings.goal===g?'sun':''}" data-goal="${g}">${g} XP${g===20?' (chill)':g===30?' (normal)':g===50?' (serious)':' (beast)'}</button>`).join('')}</div></div>
+    <label class="row" style="font-weight:800"><input type="checkbox" id="setSound" ${S.settings.sound?'checked':''} style="width:22px;height:22px"> Sound effects</label>
+    <label class="row" style="font-weight:800"><input type="checkbox" id="setUnlock" ${S.settings.unlockAll?'checked':''} style="width:22px;height:22px"> Unlock everything (for grown-ups and teachers)</label>
+    <div class="row"><button class="btn go" id="setSave">Save</button><button class="btn small" id="setReset" style="margin-left:auto">Reset all progress</button></div>
+    <div id="resetConfirm" hidden class="msg bad">This deletes all XP, coins, badges and your streak. Are you sure? <div class="row" style="margin-top:8px"><button class="btn small hot" id="resetYes">Yes, start over</button><button class="btn small" id="resetNo">Keep my progress</button></div></div>
+   </div>`);
+  $$('[data-goal]', box).forEach(b => b.onclick = () => { $$('[data-goal]', box).forEach(x => x.classList.remove('sun')); b.classList.add('sun'); box.dataset.goal = b.dataset.goal; });
+  $('#setSave', box).onclick = () => { S.name = $('#setName').value.trim() || S.name; S.settings.sound = $('#setSound').checked; S.settings.unlockAll = $('#setUnlock').checked;
+    if (box.dataset.goal) S.settings.goal = +box.dataset.goal; save(); closeModal(); refreshAll(); toast('Settings saved'); };
+  $('#setReset', box).onclick = () => { $('#resetConfirm').hidden = false; };
+  $('#resetNo', box).onclick = () => { $('#resetConfirm').hidden = true; };
+  $('#resetYes', box).onclick = () => { S = defaults(); save(); closeModal(); refreshAll(); };
+}
+const JOKES = [
+  "A SQL query walks up to two tables and asks: \"Can I JOIN you?\"",
+  "Why don't databases ever get lost? They always know WHERE they are!",
+  "Why did the hamster learn SQL? So it could ORDER BY snacks!",
+  "What did the column say to the row? \"Let's meet at the cell!\"",
+  "Why was the table so tired? It had too many rows to row, row, row your boat!",
+  "Why did Byte bring a ladder to class? To reach the next LEVEL!",
+  "What's a database's favorite game? Hide and SEEK... I mean, SELECT!",
+  "Why did the NULL go to the doctor? It wasn't feeling like anything!",
+  "Knock knock. Who's there? DISTINCT. DISTINCT who? DISTINCT... only once, no repeats!",
+  "Why are cats bad at SQL? They always DELETE the mouse!",
+];
+const MOVES = ["Do 5 frog jumps! 🐸","Stretch up to the sky and count to 5 ☁️","Make your silliest face 🤪","Drink some water like a thirsty camel 🐪","Shake your hands like a wet puppy 🐶","Spin around slowly two times 🌀","Give yourself a high five ✋","Take 3 big balloon breaths 🎈"];
+let breakTimer = null;
+function brainBreak(){
+  sfx.good();
+  const box = modal(`<div style="text-align:center">${byteSVG({size:120, mood:'dance'})}
+   <div class="eyebrow">Brain break</div><div class="joke">${esc(pick(JOKES))}</div>
+   <div class="msg info" style="font-size:1.15rem">${esc(pick(MOVES))}</div>
+   <div class="timer-ring" id="brkRing"></div>
+   <div class="row" style="justify-content:center"><button class="btn sun" id="brkMore">Another joke</button><button class="btn go" data-close>Back to the quest</button></div></div>`);
+  let left = 30; const draw = () => { const el = $('#brkRing'); if (!el) return; const c = 2*Math.PI*46;
+    el.innerHTML = `<svg viewBox="0 0 110 110" width="110" height="110"><circle cx="55" cy="55" r="46" fill="none" stroke="var(--grid)" stroke-width="10"/><circle cx="55" cy="55" r="46" fill="none" stroke="var(--pink)" stroke-width="10" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-left/30)}" transform="rotate(-90 55 55)" style="transition:stroke-dashoffset 1s linear"/><text x="55" y="64" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="28" fill="var(--ink)">${left}s</text></svg>`; };
+  draw(); breakTimer = setInterval(() => { left--; draw(); if (left <= 0) { clearInterval(breakTimer); breakTimer = null; sfx.win(); } }, 1000);
+  $('#brkMore', box).onclick = () => { $('.joke', box).textContent = pick(JOKES); sfx.click(); };
+}
+
+/* =====================================================================
+   PLAYER — lessons, bosses, projects
+   ===================================================================== */
+let P = null;
+function startNode(n){
+  P = {node:n, steps:n.steps, i:0, hints:0, mistakes:0, xp:0, boss:n.type === 'boss', hp:n.steps.length, hearts:3, ds:n.db || 'pets'};
+  route = n.type === 'project' ? 'projects' : 'map'; renderNav();
+  renderPlayer();
+}
+function renderPlayer(){
+  const n = P.node;
+  view.className = 'wrap';
+  view.innerHTML = `<div class="player">
+   <div class="player-top"><button class="icon-btn" id="plClose" aria-label="Leave">✕</button>
+     <div class="pbar">${P.steps.map((_, k) => `<i class="${k < P.i ? 'on' : k === P.i ? 'now' : ''}"></i>`).join('')}</div>
+     ${P.boss ? `<div class="hearts" aria-label="${P.hearts} hearts left">${[0,1,2].map(k => `<span class="${k >= P.hearts ? 'lost' : ''}">${ICON.heart()}</span>`).join('')}</div>` : ''}</div>
+   ${P.boss ? `<div class="boss-arena card"><div class="boss" id="bossSprite">${bossSVG(n)}</div>
+     <div><div class="eyebrow">Boss battle</div><h3 style="font-size:1.4rem">${esc(n.name)}</h3><div class="hpbar"><i id="hp" style="width:${P.hp/P.steps.length*100}%"></i></div>
+     <div class="muted" style="font-weight:800;font-size:.85rem;margin-top:4px">Each right answer hits the boss. Typos don't cost hearts, only wrong answers do.</div></div></div>` : ''}
+   <div id="stage"></div></div>`;
+  $('#plClose').onclick = () => { if (n.type === 'project') go('projects'); else go('map'); };
+  renderStep();
+}
+function updatePbar(){ $$('.pbar i').forEach((el, k) => el.className = k < P.i ? 'on' : k === P.i ? 'now' : ''); }
+function nextStep(){
+  P.i++; updatePbar();
+  if (P.i >= P.steps.length) return finishNode();
+  renderStep();
+}
+function stageEl(){ const s = $('#stage'); s.className = ''; void s.offsetWidth; s.className = 'stage'; return s; }
+function renderStep(){
+  const st = P.steps[P.i], s = stageEl();
+  if (st.t === 'talk') return stepTalk(s, st);
+  if (st.t === 'mcq') return stepMCQ(s, st);
+  if (st.t === 'build') return stepBuild(s, st);
+  if (st.t === 'code') return stepCode(s, st);
+}
+function typewrite(el, done){
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { done && done(); return () => {}; }
+  const nodes = []; const walk = n => n.childNodes.forEach(c => c.nodeType === 3 ? nodes.push([c, c.textContent]) : walk(c)); walk(el);
+  nodes.forEach(([n]) => n.textContent = '');
+  let ni = 0, ci = 0, stop = false;
+  const finish = () => { stop = true; nodes.forEach(([n, t]) => n.textContent = t); done && done(); };
+  (function step(){ if (stop) return; for (let k = 0; k < 2; k++) { if (ni >= nodes.length) { stop = true; done && done(); return; }
+    const [n, t] = nodes[ni]; n.textContent = t.slice(0, ++ci); if (ci >= t.length) { ni++; ci = 0; } } setTimeout(step, 16); })();
+  return finish;
+}
+function stepTalk(s, st){
+  s.innerHTML = `<div class="talk">${byteSVG({size:150, mood: P.boss ? 'think' : pick(['idle','happy','idle'])})}
+   <div class="bubble card" id="bub"><p>${md(st.say)}</p>${st.code ? `<pre class="sqlblock">${hl(st.code)}</pre>` : ''}${st.art ? art(st.art) : ''}</div></div>
+   ${st.show ? `<div style="margin-top:18px">${showTable(P.ds, st.show)}</div>` : ''}
+   <div class="step-actions"><button class="btn go big" id="cont">Continue →</button></div>`;
+  const finish = typewrite($('#bub p', s));
+  $('#bub', s).addEventListener('click', finish);
+  $('#cont', s).onclick = e => { finish(); sfx.click(); P.xp += 2; gainXP(2, e.currentTarget); nextStep(); };
+  $('#cont', s).focus({preventScroll:true});
+}
+function mistake(){
+  P.mistakes++; S.stats.oops++; save(); checkBadges();
+  if (P.boss) {
+    P.hearts--; const hs = $$('.hearts > span'); if (hs[P.hearts]) hs[P.hearts].className = 'lost';
+    const b = $('#bossSprite'); if (b) { b.classList.remove('laugh'); void b.offsetWidth; b.classList.add('laugh'); }
+    if (P.hearts <= 0) { setTimeout(bossLost, 900); return true; }
+  }
+  return false;
+}
+function hitBoss(){
+  P.hp--; sfx.hit(); const b = $('#bossSprite'); if (b) { b.classList.remove('hit'); void b.offsetWidth; b.classList.add('hit'); confetti(centerOf(b).x, centerOf(b).y, 30); }
+  const hp = $('#hp'); if (hp) hp.style.width = (P.hp / P.steps.length * 100) + '%';
+}
+const YAY = ["Boom! 💥","You're a SQL star!","Byte is doing a happy dance!","Big brain move!","Nailed it!","Database magic!","Woohoo!","Super-duper!","Yesss!"];
+const OOPS = ["Oops = brain XP! Try again.","So close! Want a hint?","Mistakes make your brain stronger!","Not yet! Look again.","Hmm, Byte is scratching his head. Try once more!"];
+function stepMCQ(s, st){
+  let tries = 0, solved = false;
+  s.innerHTML = `<div class="q-card card"><h2 class="q-title">${md(st.q)}</h2>${st.code ? `<pre class="sqlblock">${hl(st.code)}</pre>` : ''}
+   <div class="opts">${st.opts.map((o, k) => `<button class="opt" data-k="${k}"><span class="k">${'ABCD'[k]}</span><span>${md(o)}</span></button>`).join('')}</div>
+   <div id="why"></div></div><div class="step-actions" id="acts"></div>`;
+  $$('.opt', s).forEach(b => b.onclick = () => {
+    if (solved || b.classList.contains('wrong')) return;
+    const k = +b.dataset.k;
+    if (k === st.a) {
+      solved = true; b.classList.add('right'); sfx.good(); confetti(centerOf(b).x, centerOf(b).y, 40);
+      const xp = tries ? 2 : 5; P.xp += xp; gainXP(xp, b); if (P.boss) hitBoss();
+      $('#why', s).innerHTML = `<div class="why">${md(pick(YAY) + ' ' + (st.why || ''))}</div>`;
+      $('#acts', s).innerHTML = `<button class="btn go big" id="cont">Continue →</button>`; $('#cont').onclick = () => { sfx.click(); nextStep(); }; $('#cont').focus({preventScroll:true});
+    } else {
+      tries++; b.classList.add('wrong'); sfx.bad();
+      $('#why', s).innerHTML = `<div class="why">${esc(pick(OOPS))}</div>`;
+      mistake();
+    }
+  });
+}
+function stepBuild(s, st){
+  const ans = st.answer.split(' '), bank = shuffle([...ans, ...(st.extra || [])]).map((w, k) => ({w, k}));
+  let chosen = [];
+  s.innerHTML = `<div class="q-card card"><h2 class="q-title">${md(st.q)}</h2>
+    <div class="build-slot" id="slot"></div><div class="build-bank" id="bank"></div>
+    <div id="bres"></div><div class="step-actions"><button class="btn small" id="bclear">Clear</button><button class="btn go big" id="bcheck">Check ✓</button></div></div>`;
+  const draw = () => {
+    $('#slot', s).innerHTML = chosen.map(c => `<button class="chip ${KW.has(c.w.toUpperCase()) ? 'kw' : 'cl'}" data-k="${c.k}">${esc(c.w)}</button>`).join('');
+    $('#bank', s).innerHTML = bank.map(c => `<button class="chip ${KW.has(c.w.toUpperCase()) ? 'kw' : 'cl'} ${chosen.includes(c) ? 'used' : ''}" data-k="${c.k}">${esc(c.w)}</button>`).join('');
+    $$('#bank .chip', s).forEach(b => b.onclick = () => { sfx.click(); chosen.push(bank.find(c => c.k === +b.dataset.k)); draw(); });
+    $$('#slot .chip', s).forEach(b => b.onclick = () => { sfx.click(); chosen = chosen.filter(c => c.k !== +b.dataset.k); draw(); });
+  };
+  draw();
+  $('#bclear', s).onclick = () => { chosen = []; draw(); };
+  $('#bcheck', s).onclick = e => {
+    const sql = chosen.map(c => c.w).join(' ');
+    const u = runSQL(sql, P.ds), sol = runSQL(st.answer, P.ds);
+    if (u.ok) { S.stats.runs++; }
+    const cmp = u.ok ? compare(u.res, sol.res, false) : {ok:false};
+    if (cmp.ok) {
+      sfx.good(); confetti(); const xp = P.mistakes ? 6 : 10; P.xp += xp; gainXP(xp, e.currentTarget);
+      $('#bres', s).innerHTML = `<div class="msg good"><span class="big">${esc(pick(YAY))}</span>Your spell: <code>${esc(sql)}</code></div><div style="margin-top:12px">${tableHTML(u.res, 6)}</div>`;
+      e.currentTarget.textContent = 'Continue →'; e.currentTarget.onclick = () => { sfx.click(); nextStep(); };
+      $('#bclear', s).remove(); $('#bank', s).remove();
+    } else {
+      sfx.bad(); mistake();
+      $('#bres', s).innerHTML = `<div class="msg bad">${chosen.length ? 'Not quite. Remember the order: SELECT what, FROM where.' : 'Tap the blocks to build your spell first!'}</div>`;
+    }
+  };
+}
+
+/* ---------- reusable code task ---------- */
+function codeTask(host, task, {ds, onSolve, mode='lesson', canReveal=true, startText=''}){
+  const tbls = tablesOf(ds), idents = new Set(tbls.flatMap(t => [t.name.toLowerCase(), ...t.cols.map(c => c.toLowerCase())]));
+  const sol = solution(task, ds), ordered = task.ordered ?? isOrdered(task.check || task.sol);
+  let hintN = 0, wrongs = 0, solved = false;
+  const hints = task.hints || [];
+  const quick = ['SELECT','*','FROM','WHERE','=',"'",',',';','AND','OR','ORDER BY','DESC','LIMIT','GROUP BY','COUNT(*)','JOIN','ON','IS NULL'];
+  host.innerHTML = `
+   <div class="task-q">${md(task.q)}</div>
+   <div class="task-grid">
+    <div class="col">
+      <div class="editor"><pre class="hl" aria-hidden="true"></pre><textarea id="ed-${task.id || 'x'}" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Write your SQL here"></textarea><span class="ph">Type your SQL spell here…</span></div>
+      <div class="chips" aria-label="Tap to insert">${quick.map(w => `<button class="chip kw" data-ins="${esc(w)}">${esc(w)}</button>`).join('')}
+        ${tbls.map(t => `<button class="chip tb" data-ins="${t.name}">${t.name}</button>`).join('')}
+        ${[...new Set(tbls.filter(t => (task.tables || [task.mainTable || tbls[0]?.name]).some(x => x === t.name) || tbls.length <= 3).flatMap(t => t.cols))].slice(0, 14).map(c => `<button class="chip cl" data-ins="${c}">${c}</button>`).join('')}</div>
+      <div class="row"><button class="btn go" data-run>▶ ${mode === 'arena' ? 'Submit' : 'Run & check'}</button>
+        <button class="btn small" data-tryrun>Just run</button>
+        ${hints.length || canReveal ? `<button class="btn small sun" data-hint>💡 Hint</button>` : ''}
+        <button class="btn small" data-peek>👀 Peek at tables</button>
+        <span class="muted" style="font-size:.8rem;font-weight:800">Ctrl + Enter runs</span></div>
+      <div data-hints></div>
+    </div>
+    <div class="col">
+      <div class="card" style="padding:14px"><div class="tbl-cap"><span>🎯 Byte wants to see</span><span class="muted">${sol.ok && sol.res ? sol.res.values.length + ' row' + (sol.res.values.length===1?'':'s') : ''}</span></div>
+        ${sol.ok ? tableHTML(sol.res, 8) : `<div class="msg bad">Solution error: ${esc(sol.err)}</div>`}
+        ${ordered ? `<div class="muted" style="font-size:.82rem;font-weight:800;margin-top:6px">The order of rows matters here.</div>` : `<div class="muted" style="font-size:.82rem;font-weight:800;margin-top:6px">Column names and row order don't matter.</div>`}</div>
+      <div data-out></div>
+    </div>
+   </div>`;
+  const ta = $('textarea', host), pre = $('pre', host), ph = $('.ph', host), out = $('[data-out]', host), hintsEl = $('[data-hints]', host);
+  const sync = () => { pre.innerHTML = hl(ta.value, idents) + '\n'; ph.hidden = !!ta.value; };
+  ta.value = startText; sync();
+  ta.addEventListener('input', sync);
+  ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); check(); } });
+  $$('[data-ins]', host).forEach(b => b.onclick = () => {
+    sfx.click(); const w = b.dataset.ins, a = ta.selectionStart, z = ta.selectionEnd, v = ta.value;
+    const before = v.slice(0, a), tight = /^[,;)]$/.test(w) || w === "'";
+    const pad = before && !/[\s(']$/.test(before) && !tight ? ' ' : '';
+    const ins = pad + w + (tight || w === "'" ? '' : ' ');
+    ta.value = before + ins + v.slice(z); ta.selectionStart = ta.selectionEnd = a + ins.length; sync(); ta.focus();
+  });
+  $('[data-peek]', host).onclick = () => peekTables(ds);
+  const hb = $('[data-hint]', host);
+  if (hb) hb.onclick = () => {
+    sfx.click(); P && (P.hints++);
+    if (hintN < hints.length) { hintsEl.innerHTML += `<div class="hintbox" style="margin-top:8px"><b>Hint ${hintN+1}:</b> ${md(hints[hintN])}</div>`; hintN++; }
+    else if (canReveal) { hintsEl.innerHTML += `<div class="hintbox" style="margin-top:8px"><b>Answer:</b><pre class="sqlblock" style="margin:6px 0 0">${hl(task.sol)};</pre>Type it yourself to finish. Typing it helps your brain remember!</div>`; hintN++; hb.remove(); P && (P.revealed = true); }
+    if (canReveal && hintN >= hints.length && hints.length && hb.isConnected) hb.innerHTML = '🔓 Show answer';
+  };
+  const showAI = async (sql, problem) => {
+    if (!window.claude || !window.claude.use) return;
+    const sample = await window.claude.use('sample'); if (!sample || out.querySelector('[data-ai]')) return;
+    const wrap = document.createElement('div'); wrap.innerHTML = `<button class="btn small sky" data-ai style="margin-top:10px">🤖 Ask Byte's big brain</button>`; out.appendChild(wrap);
+    wrap.firstChild.onclick = async () => {
+      wrap.innerHTML = `<div class="hintbox ai-ans" style="margin-top:10px">Byte is thinking…</div>`; const box = wrap.firstChild;
+      const schema = tbls.map(t => `${t.name}(${t.cols.join(', ')})`).join('; ');
+      try {
+        await sample(`You are Byte, a cheerful little database mascot teaching SQL to a 10-year-old with ADHD. Keep it to 2 short, kind, funny sentences. Give ONE hint that points to the mistake. NEVER write the full correct query.\n\nTask: ${task.q.replace(/\*\*/g,'')}\nTables: ${schema}\nKid's SQL: ${sql || '(empty)'}\nWhat went wrong: ${problem}`,
+          {modelTier:'quick', onText:({text}) => { box.textContent = text; }});
+      } catch(e) { box.textContent = e && e.code === 'not_granted' ? "Byte's big brain is switched off here. Try the 💡 Hint button instead!" : "Byte's big brain is napping. Try the 💡 Hint button!"; }
+    };
+  };
+  function check(justRun){
+    const sql = ta.value.trim();
+    if (!sql) { out.innerHTML = `<div class="msg info">Type a spell first! You can tap the colorful blocks to help.</div>`; return; }
+    const u = runSQL(sql, ds, justRun ? null : task.check);
+    S.stats.runs++; save(); checkBadges();
+    if (!u.ok) {
+      sfx.bad();
+      out.innerHTML = `<div class="msg bad">${mode === 'arena' ? '<span class="verdict">Runtime Error</span>' : '<span class="big">Oops, a typo bug! 🐞</span>'}${md(friendly(u.err, ds))}${P && P.boss ? '<div style="margin-top:6px;font-size:.9rem">(Typos don\'t cost hearts. Phew!)</div>' : ''}</div>`;
+      $('.byte-react', host)?.remove();
+      showAI(sql, u.err); return;
+    }
+    if (justRun) { out.innerHTML = tableHTML(u.res, 10, 'Your result'); return; }
+    const cmp = compare(u.res, sol.res, ordered);
+    if (cmp.ok) {
+      if (solved) return; solved = true; sfx.good(); confetti();
+      out.innerHTML = `<div class="msg good">${mode === 'arena' ? `<span class="verdict">Accepted ✅</span>All test rows match. Runtime: ${Math.floor(Math.random()*40+12)} ms. Faster than a cheetah!` : `<span class="big">${esc(pick(YAY))}</span>Your answer matches exactly!`}</div><div style="margin-top:12px">${tableHTML(u.res, 8, 'Your result')}</div>`;
+      $('[data-run]', host).disabled = true; ta.readOnly = true;
+      onSolve && onSolve({wrongs, hints:hintN, el:$('[data-run]', host), revealed: hintN > hints.length});
+    } else {
+      wrongs++; sfx.bad();
+      out.innerHTML = `<div class="msg bad">${mode === 'arena' ? '<span class="verdict">Wrong Answer</span>' : `<span class="big">${esc(pick(OOPS))}</span>`}Your spell ran, but: ${md(cmp.why || 'the answer is different.')}</div><div style="margin-top:12px">${tableHTML(u.res, 8, 'Your result')}</div>`;
+      const dead = mode !== 'arena' && P && mistake();
+      if (!dead) showAI(sql, 'It ran but the result was different: ' + (cmp.why || '').replace(/\*\*/g, ''));
+    }
+  }
+  $('[data-run]', host).onclick = () => check(false);
+  $('[data-tryrun]', host).onclick = () => check(true);
+  setTimeout(() => ta.focus({preventScroll:true}), 100);
+}
+function peekTables(ds){
+  const tbls = tablesOf(ds);
+  modal(`<div class="row" style="justify-content:space-between"><h2>Tables in ${esc(DS_NAMES[ds] || ds)}</h2><button class="icon-btn" data-close aria-label="Close">✕</button></div>
+    <div style="display:grid;gap:16px;margin-top:14px">${tbls.map(t => showTable(ds, t.name)).join('')}</div>`, true);
+}
+function stepCode(s, st){
+  s.innerHTML = `<div class="q-card card" id="ct"></div><div class="step-actions" id="acts"></div>`;
+  codeTask($('#ct', s), st, {ds:P.ds, canReveal:!P.boss, onSolve:({wrongs, el, revealed}) => {
+    const xp = revealed ? 2 : wrongs || P.hints ? 6 : 10; P.xp += xp; gainXP(xp, el);
+    if (P.boss) hitBoss();
+    $('#acts', s).innerHTML = `<button class="btn go big" id="cont">Continue →</button>`;
+    $('#cont').onclick = () => { sfx.click(); nextStep(); }; $('#cont').focus({preventScroll:true});
+    $('#cont').scrollIntoView({behavior:'smooth', block:'nearest'});
+  }});
+}
+
+/* ---------- boss intro / lost ---------- */
+function bossIntro(n){
+  route = 'map'; renderNav(); view.className = 'wrap view-in';
+  view.innerHTML = `<div class="finish card" style="max-width:640px">
+    <div class="boss laugh" style="width:180px;margin:0 auto">${bossSVG(n, 180)}</div>
+    <div class="eyebrow">Boss battle · ${n.steps.length} questions · 3 hearts</div><h1 style="font-size:2.2rem">${esc(n.name)}</h1>
+    <div class="bubble card" style="margin:16px auto;max-width:460px;text-align:left">${esc(n.taunt)}</div>
+    <p class="muted" style="font-weight:700">Every right answer hits the boss. A wrong answer costs a heart. Typos are free. You can't peek at answers in a boss fight, but hints are there!</p>
+    <div class="row" style="justify-content:center"><button class="btn" data-go="map">Not yet</button><button class="btn hot big" id="fight">Fight! ⚔️</button></div></div>`;
+  $('#fight').onclick = () => { sfx.win(); startNode(n); };
+}
+function bossLost(){
+  sfx.bad();
+  view.innerHTML = `<div class="finish card">${bossSVG(P.node, 150)}
+   <h2 style="font-size:2rem">${esc(P.node.name)} laughed this time!</h2>
+   <p style="font-weight:700" class="muted">That's OK. You keep all your XP, and now you know which questions are tricky. Bosses get easier every time you try.</p>
+   ${byteSVG({mood:'sad', size:100})}
+   <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" data-go="map">Back to map</button><button class="btn hot big" id="again">Try again!</button></div></div>`;
+  const n = P.node; $('#again').onclick = () => startNode(n);
+}
+
+/* ---------- finish ---------- */
+function finishNode(){
+  const n = P.node, prev = S.done[n.id];
+  const stars = P.boss ? 3 : (P.revealed ? 1 : P.hints === 0 && P.mistakes <= 1 ? 3 : P.mistakes + P.hints <= 4 ? 2 : 1);
+  const coins = n.type === 'boss' ? 30 : n.type === 'project' ? 25 : 10;
+  S.done[n.id] = {stars:Math.max(stars, prev ? prev.stars : 0), date:today()};
+  save();
+  view.innerHTML = `<div class="finish card">
+    ${n.type === 'boss' ? `<div class="eyebrow">Boss defeated!</div><h1 style="font-size:2.3rem">You beat ${esc(n.name)}!</h1>` : `<div class="eyebrow">${n.type === 'project' ? 'Project complete' : 'Lesson complete'}</div><h1 style="font-size:2.3rem">${esc(pick(['Amazing work','You did it','Fantastic','Super star']))}${S.name ? ', ' + esc(S.name) : ''}!</h1>`}
+    <div class="big-stars">${[1,2,3].map(k => ICON.star(64, k <= stars)).join('')}</div>
+    ${byteSVG({mood:'dance', size:130})}
+    <div class="reward-row"><span class="pill">${ICON.star(22)} +${P.xp + 10} XP</span><span class="pill" id="coinSrc">${ICON.coin()} +${coins}</span><span class="pill">${ICON.flame()} ${Math.max(1, streak())} day streak</span></div>
+    ${stars < 3 && !P.boss ? `<p class="muted" style="font-weight:700">Want 3 stars? Replay it later without hints. Your brain will remember more the second time!</p>` : ''}
+    <div class="journal"><label for="jIn" style="font-weight:900">Teach Byte! In your own words, what did you learn? <span class="muted">(+5 XP)</span></label>
+      <textarea id="jIn" rows="2" placeholder="Example: WHERE is a filter that only lets some rows through." style="margin-top:6px"></textarea>
+      <div class="row" style="margin-top:8px"><button class="btn small sun" id="jSave">Save to my journal</button><span id="jMsg" class="muted" style="font-weight:800"></span></div></div>
+    <div class="row" style="justify-content:center"><button class="btn" id="toMap">${n.type === 'project' ? 'All projects' : 'Map'}</button>${nextBtn(n)}</div></div>`;
+  sfx.win(); confetti(); setTimeout(() => confetti(innerWidth*.2, innerHeight*.5, 60), 400); setTimeout(() => confetti(innerWidth*.8, innerHeight*.5, 60), 700);
+  gainXP(10, $('.big-stars')); addCoins(coins, $('#coinSrc'));
+  $('#toMap').onclick = () => go(n.type === 'project' ? 'projects' : 'map');
+  const nb = $('#nextBtn'); if (nb) nb.onclick = () => openNode(nb.dataset.id);
+  $('#jSave').onclick = e => { const v = $('#jIn').value.trim(); if (!v) { $('#jMsg').textContent = 'Write a few words first!'; return; }
+    S.journal.unshift({d:today(), lesson:n.title, text:v.slice(0, 400)}); S.journal = S.journal.slice(0, 120); gainXP(5, e.currentTarget);
+    e.currentTarget.disabled = true; $('#jIn').readOnly = true; $('#jMsg').textContent = 'Saved! Byte learned something too.'; };
+  checkBadges();
+  if (n.final && !prev) setTimeout(certificate, 1600);
+}
+function nextBtn(n){
+  if (n.type === 'project') { const nx = PROJECTS[PROJECTS.findIndex(p => p.id === n.id) + 1]; return nx ? `<button class="btn go big" id="nextBtn" data-id="${nx.id}">Next project →</button>` : ''; }
+  const nx = PATH[PATH.indexOf(n) + 1]; return nx ? `<button class="btn go big" id="nextBtn" data-id="${nx.id}">${nx.type === 'boss' ? 'Face the boss →' : 'Next lesson →'}</button>` : `<button class="btn hot big" data-go="projects">Real-life projects →</button>`;
+}
+function certificate(){
+  confetti(); sfx.win();
+  modal(`<div class="cert"><div class="eyebrow">Certificate of awesomeness</div><h2>SQL Graduate</h2><p style="font-weight:700">This proves that</p>
+   <div class="nm">${esc(S.name || 'Explorer')}</div><p style="font-weight:700">finished every world of Byte's SQL Quest and beat the Mega Bug on ${new Date().toLocaleDateString(undefined, {day:'numeric', month:'long', year:'numeric'})}.</p>
+   ${byteSVG({mood:'dance', size:110, hat:'crown'})}<p class="muted" style="font-weight:800">Signed, Byte the Database</p></div>
+   <div class="row" style="justify-content:center;margin-top:16px"><button class="btn hot big" data-go="projects">Start real projects</button></div>`);
+}
+
+/* ---------- lesson art ---------- */
+function art(name){
+  if (name === 'anatomy') return `<div class="art art-anat"><div class="tbl-wrap"><table class="data"><thead><tr><th>id</th><th class="colg">name</th><th>animal</th></tr></thead><tbody>
+    <tr><td>1</td><td class="colg">Momo</td><td>dog</td></tr><tr><td class="g">2</td><td class="g">Biscuit</td><td class="g">cat</td></tr><tr><td>3</td><td class="colg">Sheru</td><td>dog</td></tr></tbody></table></div>
+    <div class="row" style="margin-top:8px;font-size:.9rem"><span class="tag" style="background:var(--sun)">Row = one pet</span><span class="tag" style="background:var(--sky)">Column = one fact</span></div></div>`;
+  if (name === 'filter') { const items = [['Momo','dog',1],['Biscuit','cat',0],['Sheru','dog',1],['Bubbles','fish',0],['Laddoo','dog',1]];
+    return `<div class="art funnel"><div class="fnl">WHERE animal = 'dog'</div><div class="fn"></div>${items.map(([n, a, ok], i) => `<div class="pc ${ok?'pass':'rej'}" style="animation-delay:${i}s;--dx:${i%2?'-110px':'110px'}">${n}<br><small>${a}</small></div>`).join('')}</div>`; }
+  if (name === 'sort') { const w = [12,4,25,2,8], sorted = [...w].sort((a, b) => a - b), cols = ['var(--pink)','var(--sky)','var(--mint)','var(--sun)','var(--grape)'];
+    return `<div class="art"><div class="sortbars">${w.map((v, i) => `<div style="height:${20 + v*4}px;background:${cols[i]};--to:${(sorted.indexOf(v) - i)*56}px">${v}kg</div>`).join('')}</div><div class="muted" style="text-align:center;font-weight:800;font-size:.85rem;margin-top:6px">ORDER BY weight_kg</div></div>`; }
+  if (name === 'buckets') { const cs = [['var(--pink)',-120],['var(--sky)',0],['var(--pink)',-120],['var(--mint)',120],['var(--sky)',0],['var(--pink)',-120]];
+    return `<div class="art"><div class="buckets">${cs.map(([c, dx], i) => `<span class="candy" style="left:calc(50% - 10px);background:${c};--dx:${dx}px;animation-delay:${i*.45}s"></span>`).join('')}
+    <div class="bucket" style="background:color-mix(in srgb,var(--pink) 25%,transparent)"><span>pink</span>3</div><div class="bucket" style="background:color-mix(in srgb,var(--sky) 25%,transparent)"><span>blue</span>2</div><div class="bucket" style="background:color-mix(in srgb,var(--mint) 25%,transparent)"><span>green</span>1</div></div>
+    <div class="muted" style="text-align:center;font-weight:800;font-size:.85rem;margin-top:6px">GROUP BY color → COUNT(*)</div></div>`; }
+  if (name === 'join') return `<div class="art"><div class="joinart"><div class="mt l"><div>pets</div><div>Momo · owner_id 1</div><div>Sheru · owner_id 3</div></div>
+    <div class="hand">owner_id = id</div><div class="mt r"><div>owners</div><div>1 · Riya</div><div>3 · Meera</div></div></div>
+    <div class="joinart" style="margin-top:12px"><div class="mt"><div>result</div><div>Momo · Riya</div><div>Sheru · Meera</div></div></div></div>`;
+  if (name === 'detective') return `<div class="art det"><div><b>FROM</b>1. Where is the info? Which table?</div><div><b>SELECT</b>2. What do I want to see?</div><div><b>WHERE</b>3. Which ones? Any filter?</div><div><b>ORDER BY</b>4. What order?</div></div>`;
+  if (name === 'null') return `<div class="art"><div class="boxq">?</div><div class="muted" style="text-align:center;font-weight:800;font-size:.85rem">NULL = empty mystery box</div></div>`;
+  if (name === 'grow') { const pl = s => `<svg width="${s}" height="${s}" viewBox="0 0 40 40"><path d="M20 40 V18" stroke="#16B47F" stroke-width="4"/><path d="M20 22 Q6 20 6 8 Q18 8 20 22Z M20 18 Q34 16 34 4 Q22 4 20 18Z" fill="#20C996" stroke="#1C2448" stroke-width="2"/></svg>`;
+    return `<div class="art"><div class="sprouts"><div style="animation-delay:0s">${pl(30)}Try</div><div>${pl(46).replace('<svg', '<svg style="animation-delay:1s"')}Oops!</div><div>${pl(62).replace('<svg', '<svg style="animation-delay:2s"')}Try again</div><div>${pl(84).replace('<svg', '<svg style="animation-delay:3s"')}Got it!</div></div></div>`; }
+  if (name === 'tiny') return `<div class="art"><div class="steps-art">${[1,2,3,4,5,6].map(k => `<i style="height:${k*16}px;animation-delay:${k*.5}s"></i>`).join('')}</div><div class="muted" style="text-align:center;font-weight:800;font-size:.85rem;margin-top:6px">One small step at a time</div></div>`;
+  if (name === 'flames') return `<div class="art"><div class="flames">${['M','T','W','T','F','S','S'].map((d, k) => `<div>${ICON.flame(26).replace('<svg', `<svg style="animation-delay:${k*.5}s"`)}${d}</div>`).join('')}</div></div>`;
+  return '';
+}
+
+/* ---------- ARENA ---------- */
+function renderArena(){
+  const solvedN = ARENA.filter(a => S.arena[a.id]).length;
+  const group = lvl => ARENA.filter(a => a.lvl === lvl).map(a => {
+    const lock = !S.settings.unlockAll && !S.done[a.need];
+    return `<button class="pcard card ${lock?'locked':''}" data-ar="${a.id}" ${lock?'aria-disabled="true"':''}>
+     <div class="row" style="justify-content:space-between"><span class="tag ${a.lvl}">${a.lvl}</span>${S.arena[a.id] ? `<span class="solved">✓ Solved</span>` : lock ? `<span class="muted">${ICON.lock(18)}</span>` : ''}</div>
+     <h3>${esc(a.title)}</h3><div class="muted" style="font-weight:700;font-size:.92rem">${lock ? `Unlocks after “${esc(NODE[a.need].title)}”` : md(a.q)}</div>
+     <div class="muted" style="font-size:.8rem;font-weight:800">${a.lvl === 'easy' ? '+10' : a.lvl === 'medium' ? '+20' : '+30'} coins</div></button>`;
+  }).join('');
+  view.innerHTML = `<div class="eyebrow">Practice arena</div><h1 class="h-page">SQL Arena</h1>
+   <p class="lead">Coding-test puzzles, the kind real programmers practice on HackerRank and LeetCode. You've solved ${solvedN} of ${ARENA.length}.</p>
+   <h2 class="section-h">Easy</h2><div class="grid">${group('easy')}</div>
+   <h2 class="section-h">Medium</h2><div class="grid">${group('medium')}</div>
+   <h2 class="section-h">Hard</h2><div class="grid">${group('hard')}</div>`;
+  $$('[data-ar]', view).forEach(b => b.onclick = () => {
+    const a = ARENA.find(x => x.id === b.dataset.ar);
+    if (!S.settings.unlockAll && !S.done[a.need]) { sfx.bad(); toast(ICON.lock(20) + ` Finish “${esc(NODE[a.need].title)}” first`); return; }
+    sfx.click(); arenaProblem(a);
+  });
+}
+function arenaProblem(a){
+  view.className = 'wrap view-in';
+  view.innerHTML = `<div class="row" style="margin-bottom:12px"><button class="btn small" id="arBack">← All problems</button><span class="tag ${a.lvl}">${a.lvl}</span>${S.arena[a.id] ? '<span class="solved">✓ Solved before</span>' : ''}</div>
+   <div class="card" style="padding:20px"><h1 style="font-size:1.8rem;margin-bottom:6px">${esc(a.title)}</h1>
+   <details style="margin-bottom:12px"><summary style="cursor:pointer;font-weight:900">Tables used: ${a.tables.join(', ')}</summary><div style="display:grid;gap:12px;margin-top:10px">${a.tables.map(t => showTable('arena', t)).join('')}</div></details>
+   <div id="arTask"></div></div>`;
+  $('#arBack').onclick = () => go('arena');
+  codeTask($('#arTask'), a, {ds:'arena', mode:'arena', canReveal:false, onSolve:({el}) => {
+    if (!S.arena[a.id]) { S.arena[a.id] = today(); const c = a.lvl === 'easy' ? 10 : a.lvl === 'medium' ? 20 : 30; gainXP(c, el); addCoins(c, el); }
+    checkBadges();
+  }});
+}
+
+/* ---------- PROJECTS ---------- */
+const PROJ_ART = {
+  pizza:`<svg viewBox="0 0 120 100" width="120" height="100"><circle cx="60" cy="52" r="40" fill="#FFC83A" stroke="#1C2448" stroke-width="4"/><circle cx="60" cy="52" r="32" fill="#FF8A3D"/><circle cx="48" cy="40" r="6" fill="#F2584A" stroke="#1C2448" stroke-width="2"/><circle cx="72" cy="46" r="6" fill="#F2584A" stroke="#1C2448" stroke-width="2"/><circle cx="56" cy="66" r="6" fill="#F2584A" stroke="#1C2448" stroke-width="2"/><path d="M76 62l6 4M42 54l-4 6" stroke="#20C996" stroke-width="4" stroke-linecap="round"/></svg>`,
+  book:`<svg viewBox="0 0 120 100" width="120" height="100"><path d="M14 20 Q38 10 60 22 Q82 10 106 20 V84 Q82 74 60 86 Q38 74 14 84Z" fill="#fff" stroke="#1C2448" stroke-width="4" stroke-linejoin="round"/><path d="M60 22V86" stroke="#1C2448" stroke-width="3"/><path d="M24 34h26M24 44h26M24 54h20M70 34h26M70 44h26M70 54h18" stroke="#3FA9F5" stroke-width="4" stroke-linecap="round"/></svg>`,
+  cookie:`<svg viewBox="0 0 120 100" width="120" height="100"><circle cx="54" cy="52" r="36" fill="#E8A65A" stroke="#1C2448" stroke-width="4"/><circle cx="42" cy="40" r="5" fill="#5B3A1E"/><circle cx="64" cy="36" r="4" fill="#5B3A1E"/><circle cx="58" cy="60" r="5" fill="#5B3A1E"/><circle cx="38" cy="62" r="4" fill="#5B3A1E"/><circle cx="92" cy="30" r="14" fill="none" stroke="#1C2448" stroke-width="5"/><path d="M102 40l12 12" stroke="#1C2448" stroke-width="6" stroke-linecap="round"/></svg>`,
+  trophy:`<svg viewBox="0 0 120 100" width="120" height="100"><path d="M36 12h48v22a24 24 0 0 1-48 0z" fill="#FFC83A" stroke="#1C2448" stroke-width="4"/><path d="M36 20H22q0 18 16 20M84 20h14q0 18-16 20" fill="none" stroke="#1C2448" stroke-width="4"/><path d="M54 58h12v12H54z M42 70h36v14H42z" fill="#FFC83A" stroke="#1C2448" stroke-width="4"/><path d="M60 22l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1z" fill="#fff"/></svg>`,
+};
+function renderProjects(){
+  const open = S.settings.unlockAll || !!S.done.boss4;
+  view.innerHTML = `<div class="eyebrow">Real-life missions</div><h1 class="h-page">Real-Life Projects</h1>
+   <p class="lead">${open ? 'Real jobs use SQL like this every day. Pick a mission!' : `These unlock after you beat the final boss, the Mega Bug. You've finished ${Object.keys(S.done).filter(k => PATH.some(n => n.id === k)).length} of ${PATH.length} map stops.`}</p>
+   <div class="grid">${PROJECTS.map(p => `<button class="pcard card ${open?'':'locked'}" data-pj="${p.id}">
+     <div class="proj-art" style="background:${COLORVAR[p.color]}">${PROJ_ART[p.art]}</div>
+     <div class="row" style="justify-content:space-between"><h3>${esc(p.title)}</h3>${S.done[p.id] ? '<span class="solved">✓ Done</span>' : open ? '' : `<span class="muted">${ICON.lock(18)}</span>`}</div>
+     <div class="muted" style="font-weight:700">${esc(p.blurb)}</div><div class="muted" style="font-size:.82rem;font-weight:800">${p.steps.filter(s => s.t === 'code').length} tasks · ${esc(DS_NAMES[p.db])} database</div></button>`).join('')}</div>`;
+  $$('[data-pj]', view).forEach(b => b.onclick = () => { if (!open) { sfx.bad(); toast(ICON.lock(20) + ' Beat the Mega Bug to unlock projects!'); return; } sfx.click(); startNode(NODE[b.dataset.pj]); });
+}
+
+/* ---------- PLAYGROUND ---------- */
+function renderPlay(){
+  const ds = view.dataset.ds || 'pets';
+  view.innerHTML = `<div class="eyebrow">Free play</div><h1 class="h-page">Playground</h1>
+   <p class="lead">Try any SQL you like. Nothing can break here: every run starts with fresh data.</p>
+   <div class="row" style="margin-bottom:14px">${Object.keys(DATASETS).map(k => `<button class="btn small ${k===ds?'sun':''}" data-ds="${k}">${esc(DS_NAMES[k].split(' (')[0])}</button>`).join('')}</div>
+   <div class="card" style="padding:18px" id="playBox"></div>`;
+  $$('[data-ds]', view).forEach(b => b.onclick = () => { view.dataset.ds = b.dataset.ds; renderPlay(); });
+  const host = $('#playBox');
+  const tbls = tablesOf(ds);
+  codeTask(host, {q:`Tables here: ${tbls.map(t => '`' + t.name + '`').join(', ')}. Press **Just run** to see what your spell does.`, sol:`SELECT * FROM ${tbls[0]?.name || 'pets'}`, tables:tbls.map(t => t.name)}, {ds, canReveal:false, startText:`SELECT * FROM ${tbls[0]?.name || 'pets'};`});
+  // the playground has no target to match
+  const target = host.querySelector('.task-grid .col:last-child .card'); if (target) target.remove();
+  const run = host.querySelector('[data-run]'); if (run) run.remove();
+  const tr = host.querySelector('[data-tryrun]'); if (tr) { tr.className = 'btn go'; tr.textContent = '▶ Run'; }
+  const ta = host.querySelector('textarea'); ta.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.stopImmediatePropagation(); tr.click(); } }, true);
+  host.querySelector('[data-out]').innerHTML = `<div class="card" style="padding:14px">${tbls.map(t => `<div style="margin-bottom:10px"><code>${t.name}</code> <span class="muted" style="font-weight:700;font-size:.88rem">${t.cols.join(', ')}</span></div>`).join('')}</div>`;
+}
+
+/* ---------- TRACKER ---------- */
+function renderTracker(){
+  const t = today(), td = S.days[t] || 0, goal = S.settings.goal, st = streak();
+  const lessons = Object.keys(S.done).length;
+  const wk = []; for (let k = 6; k >= 0; k--) { const d = new Date(); d.setDate(d.getDate() - k); wk.push(d); }
+  const maxV = Math.max(goal, ...wk.map(d => S.days[dkey(d)] || 0));
+  const minsWk = Math.round(wk.reduce((a, d) => a + (S.time[dkey(d)] || 0), 0) / 60);
+  // month calendar
+  const now = new Date(), first = new Date(now.getFullYear(), now.getMonth(), 1), daysIn = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const lead = (first.getDay() + 6) % 7;
+  let cal = ['M','T','W','T','F','S','S'].map(d => `<div class="dow">${d}</div>`).join('') + Array(lead).fill('<div class="d empty"></div>').join('');
+  for (let i = 1; i <= daysIn; i++) {
+    const k = dkey(new Date(now.getFullYear(), now.getMonth(), i)), v = S.days[k] || 0;
+    const l = !v ? '' : v >= goal ? 'l3' : v >= goal/2 ? 'l2' : 'l1';
+    cal += `<div class="d ${l} ${k === t ? 'today' : ''}" title="${k}: ${v} XP">${i}${S.goalMet[k] ? `<span class="st">${ICON.star(16)}</span>` : ''}</div>`;
+  }
+  view.innerHTML = `<div class="eyebrow">Daily tracker</div><h1 class="h-page">My Learning Tracker</h1>
+   <p class="lead">${td >= goal ? `Goal done for today! Anything more is bonus brain power.` : `Earn ${goal - td} more XP today to hit your goal and keep your flame alive.`}</p>
+   <div class="tiles">
+    <div class="tile card"><div class="row" style="gap:8px">${ICON.flame(34)}<span class="num">${st}</span></div><div class="lbl">day streak · best ${S.bestStreak}</div></div>
+    <div class="tile card"><div class="row" style="gap:8px">${ring(td/goal, 40)}<span class="num">${td}</span></div><div class="lbl">XP today · goal ${goal}</div></div>
+    <div class="tile card"><span class="num">${S.xp}</span><div class="lbl">total XP · level ${levelOf(S.xp)}</div></div>
+    <div class="tile card"><span class="num">${lessons}</span><div class="lbl">lessons, bosses and projects done</div></div>
+    <div class="tile card"><span class="num">${minsWk}</span><div class="lbl">minutes learning this week</div></div>
+    <div class="tile card"><span class="num">${Object.keys(S.badges).length}</span><div class="lbl">badges of ${BADGES.length}</div></div>
+   </div>
+   <div class="two">
+    <div class="card" style="padding:18px"><h2 style="font-size:1.3rem;margin-bottom:12px">${now.toLocaleDateString(undefined, {month:'long', year:'numeric'})}</h2><div class="cal">${cal}</div>
+      <div class="row muted" style="margin-top:12px;font-size:.82rem;font-weight:800;gap:14px"><span>Darker green = more XP</span><span class="row" style="gap:4px">${ICON.star(16)} goal reached</span></div></div>
+    <div class="card" style="padding:18px"><h2 style="font-size:1.3rem;margin-bottom:12px">Last 7 days</h2>
+      <div class="bars"><div class="goal-line" style="bottom:${(goal/maxV)*(150-24)+24}px"><span>goal ${goal}</span></div>
+      ${wk.map((d, i) => { const v = S.days[dkey(d)] || 0; return `<div class="b"><em>${v || ''}</em><i style="height:${Math.max(4, v/maxV*126)}px;animation-delay:${i*80}ms;${v >= goal ? 'background:var(--mint)' : ''}"></i><span>${d.toLocaleDateString(undefined, {weekday:'short'}).slice(0, 2)}</span></div>`; }).join('')}</div></div>
+   </div>
+   <h2 class="section-h">My journal</h2>
+   <div class="jlist">${S.journal.length ? S.journal.slice(0, 15).map(j => `<div class="jitem"><small>${esc(j.d)} · ${esc(j.lesson)}</small>${esc(j.text)}</div>`).join('') : `<div class="jitem">Nothing here yet. After each lesson, teach Byte what you learned. Explaining things is the #1 way to remember them!</div>`}</div>`;
+}
+
+/* ---------- CLOSET ---------- */
+function renderCloset(){
+  view.innerHTML = `<div class="eyebrow">Byte's closet</div><h1 class="h-page">Closet and Badges</h1>
+   <p class="lead">Spend coins to dress up Byte. Earn coins from lessons, bosses, arena puzzles and your daily goal.</p>
+   <div class="closet"><div class="stagecard card"><div id="bigByte">${byteSVG({size:170, mood:'happy'})}</div>
+     <div class="pill" style="display:inline-flex;margin-top:10px">${ICON.coin()} ${S.coins} coins</div></div>
+    <div><h2 class="section-h" style="margin-top:0">Hats</h2><div class="shop">${shopItems('hat')}</div>
+     <h2 class="section-h">Colors</h2><div class="shop">${shopItems('color')}</div>
+     <h2 class="section-h">Badges</h2><div class="badges">${BADGES.map(b => `<div class="badge card ${S.badges[b.id] ? '' : 'off'}">${medal(b.color, b.g)}<span>${esc(b.name)}</span><small>${esc(b.desc)}</small></div>`).join('')}</div></div></div>`;
+  $$('[data-item]', view).forEach(b => b.onclick = () => {
+    const it = SHOP.find(x => x.id === b.dataset.item), owned = S.owned.includes(it.id);
+    if (!owned) {
+      if (S.coins < it.price) { sfx.bad(); toast(`You need ${it.price - S.coins} more coins. Do a lesson to earn some!`); return; }
+      S.coins -= it.price; S.owned.push(it.id); sfx.coin(); confetti(centerOf(b).x, centerOf(b).y, 50); toast(`You bought the ${esc(it.name)}!`);
+    }
+    if (it.kind === 'hat') S.wear.hat = S.wear.hat === it.id && owned ? '' : it.id; else S.wear.color = it.id;
+    save(); checkBadges(); renderStats(); renderCloset(); sfx.good();
+  });
+}
+function shopItems(kind){
+  return SHOP.filter(i => i.kind === kind).map(i => {
+    const owned = S.owned.includes(i.id), wearing = kind === 'hat' ? S.wear.hat === i.id : S.wear.color === i.id;
+    const pic = kind === 'hat' ? byteSVG({size:74, hat:i.id}) : `<span class="swatch" style="background:${BYTE_COLORS[i.id][0]}"></span>`;
+    return `<button class="item card ${wearing ? 'wearing' : ''}" data-item="${i.id}">${pic}<span>${esc(i.name)}</span>
+      <span class="muted" style="font-size:.85rem">${wearing ? 'Wearing ✓' : owned ? 'Tap to wear' : `${ICON.coin(16)} ${i.price}`}</span></button>`;
+  }).join('');
+}
+
+/* =====================================================================
+   TIME TRACKING + BOOT
+   ===================================================================== */
+let lastAct = Date.now();
+['pointerdown','keydown'].forEach(ev => addEventListener(ev, () => lastAct = Date.now(), {passive:true}));
+setInterval(() => {
+  if (document.hidden || Date.now() - lastAct > 90000) return;
+  const t = today(); S.time[t] = (S.time[t] || 0) + 20;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e) {}
+}, 20000);
+setInterval(() => { if (!document.hidden && Date.now() - lastAct < 90000) save(); }, 120000);
+
+function refreshAll(){ renderStats(); if (!P) go(route); }
+window.__selftest = () => {
+  const out = [];
+  const all = [...PATH.map(n => [n, n.db || 'pets']), ...PROJECTS.map(p => [p, p.db])];
+  all.forEach(([n, ds]) => n.steps.forEach((s, i) => {
+    if (s.t === 'code') { const r = runSQL(s.sol, ds, s.check); if (!r.ok || !r.res || !r.res.values.length) out.push(`${n.id}#${i}: ${r.err || 'empty'}`); }
+    if (s.t === 'build') { const r = runSQL(s.answer, ds); if (!r.ok) out.push(`${n.id}#${i}: ${r.err}`); }
+    if (s.show) { const r = runSQL('SELECT * FROM ' + s.show, ds); if (!r.ok) out.push(`${n.id}#${i} show: ${r.err}`); }
+  }));
+  ARENA.forEach(a => { const r = runSQL(a.sol, 'arena'); if (!r.ok || !r.res || !r.res.values.length) out.push(`${a.id}: ${r.err || 'empty'}`); });
+  return out.length ? out : 'all solutions OK';
+};
+renderNav(); renderStats();
+view.innerHTML = `<div class="finish card">${byteSVG({size:120, mood:'think'})}<h2>Byte is waking up the database…</h2></div>`;
+sqlReady.then(s => {
+  if (!s) { view.innerHTML = `<div class="finish card">${byteSVG({size:120, mood:'sad'})}<h2>The SQL engine couldn't load.</h2><p class="muted" style="font-weight:700">Check your internet connection and reload the page.</p></div>`; return; }
+  go('map');
+});
+initCloud();
+</script>
+
+</body>
+</html>
